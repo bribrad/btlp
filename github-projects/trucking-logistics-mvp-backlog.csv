@@ -1,0 +1,289 @@
+issue_key,title,body,labels,milestone,priority,size,status,area,iteration,dependencies
+MVP-001,[Epic] Foundation and environment baseline,"Establish delivery foundations (scope baseline, repo standards, CI/CD, auth scaffolding, telemetry baseline).
+
+Acceptance criteria:
+- Dev and staging environments are deployable through CI.
+- Core team roles (dispatcher, driver, billing, admin) are represented in RBAC scaffolding.
+- Logging and error monitoring baseline are active in staging.",type/epic;area/platform;priority/p0;status/backlog,M1,P0,L,Backlog,platform,Weeks 1-2,
+MVP-002,Finalize MVP requirements and acceptance matrix,"Finalize MVP scope, workflows, and definition-of-done criteria aligned to roadmap checkpoints.
+
+Acceptance criteria:
+- MVP in-scope and out-of-scope items are documented.
+- Workflow acceptance criteria are defined for load creation, dispatch, status updates, and billing export.
+- Stakeholder sign-off on scope baseline is recorded.",type/task;area/product;priority/p0;status/backlog,M1,P0,M,Backlog,product,Week 1,
+MVP-003,Repository standards and branching strategy,"Establish coding conventions, branch naming, PR review rules, and required checks.
+
+Acceptance criteria:
+- Contribution guide includes branch and PR conventions.
+- Required checks are enforced for protected main branch.
+- PR template includes testing and rollout notes.",type/task;area/platform;priority/p1;status/backlog,M1,P1,S,Backlog,platform,Week 1,MVP-002
+MVP-004,CI/CD pipeline for dev and staging,"Implement build/test/deploy pipeline for backend and frontend surfaces with staging promotion.
+
+Acceptance criteria:
+- Push to main triggers build and deployment to staging.
+- CI enforces linting and test execution.
+- Failed deployments provide clear rollback path.",type/task;area/platform;priority/p0;status/backlog,M1,P0,M,Backlog,platform,Week 2,MVP-003
+MVP-005,Authentication and RBAC scaffolding,"Add auth foundation and role-based access model for dispatcher, driver, billing, and admin.
+
+Acceptance criteria:
+- Protected endpoints require authenticated identity.
+- Role claims map to allowed actions by role.
+- Unauthorized requests return consistent error responses.",type/feature;area/security;priority/p0;status/backlog,M1,P0,M,Backlog,security,Week 2,"MVP-002, MVP-004"
+MVP-006,"Logging, metrics, and baseline alerts","Add structured logs, baseline service metrics, and initial alert rules.
+
+Acceptance criteria:
+- Logs include request ID and entity IDs where relevant.
+- Basic service health and error rate dashboards exist.
+- Alerting triggers on elevated error thresholds.",type/task;area/platform;priority/p1;status/backlog,M1,P1,M,Backlog,platform,Week 2,MVP-004
+MVP-007,[Epic] Core load/job domain and APIs,"Build data model and API surface for load/job creation and management.
+
+Acceptance criteria:
+- Load and job entities are persisted with lifecycle status.
+- CRUD APIs are available and tested.
+- Domain validation rules prevent invalid records.",type/epic;area/backend;priority/p0;status/backlog,M1,P0,XL,Backlog,backend,Weeks 3-4,MVP-001
+MVP-008,Database schema and migrations for core entities,"Implement schema and migrations for Load, Job, Driver, Assignment, JobStatusEvent, BillingRecord, ExportRun.
+
+Acceptance criteria:
+- Migrations run cleanly in local and staging environments.
+- Core foreign keys and status constraints are enforced.
+- Rollback migration path is validated.",type/task;area/backend;priority/p0;status/backlog,M1,P0,M,Backlog,backend,Week 3,MVP-007
+MVP-009,Load CRUD API,"Build create/read/update load endpoints for dispatcher workflows.
+
+Acceptance criteria:
+- Loads can be created and retrieved by ID/list.
+- Update path enforces immutable fields where required.
+- API returns clear validation and not-found errors.",type/feature;area/backend;priority/p0;status/backlog,M1,P0,M,Backlog,backend,Week 4,MVP-008
+MVP-010,Job CRUD API linked to load,"Build job APIs with sequencing and relation to parent load.
+
+Acceptance criteria:
+- Job creation requires valid `load_id`.
+- Sequence ordering is persisted and returned consistently.
+- Job status defaults to `UNASSIGNED`.",type/feature;area/backend;priority/p0;status/backlog,M1,P0,M,Backlog,backend,Week 4,MVP-008
+MVP-011,Domain validation rules for load/job timelines,"Enforce required fields and time-window consistency for load and job records.
+
+Acceptance criteria:
+- Missing required fields are rejected with field-level messages.
+- Invalid pickup/dropoff window ordering is blocked.
+- Validation behavior is covered by automated tests.",type/task;area/backend;priority/p0;status/backlog,M1,P0,S,Backlog,backend,Week 4,"MVP-009, MVP-010"
+MVP-012,Audit trail for load and job lifecycle actions,"Capture who changed key domain entities and when for compliance and operations review.
+
+Acceptance criteria:
+- Create/update lifecycle actions emit audit entries.
+- Audit entries contain actor, entity, action, and timestamp.
+- Audit retrieval endpoint or query path is documented.",type/task;area/security;priority/p1;status/backlog,M1,P1,M,Backlog,security,Week 4,"MVP-009, MVP-010"
+MVP-013,[Epic] Dispatch and assignment lifecycle,"Implement assignment lifecycle from pending dispatch to accept/reject/expire outcomes.
+
+Acceptance criteria:
+- Dispatchers can assign jobs to drivers.
+- Drivers can accept or reject assignments.
+- Expired assignments return jobs to actionable queue.",type/epic;area/dispatch;priority/p0;status/backlog,M1,P0,XL,Backlog,dispatch,Weeks 5-6,MVP-007
+MVP-014,Driver directory and availability API,"Build driver identity, availability, and assignment eligibility endpoints.
+
+Acceptance criteria:
+- Driver profiles are queryable by dispatcher workflow.
+- Availability state can be toggled and persisted.
+- Inactive/unavailable drivers are excluded from dispatch suggestions.",type/feature;area/dispatch;priority/p1;status/backlog,M1,P1,M,Backlog,dispatch,Week 5,MVP-008
+MVP-015,Dispatch endpoint to create pending assignments,"Add dispatch API to create `PENDING` assignments and tie them to target drivers.
+
+Acceptance criteria:
+- Dispatch endpoint creates assignment with `PENDING` state.
+- Existing assignment conflicts are prevented.
+- Dispatch action logs actor and context metadata.",type/feature;area/dispatch;priority/p0;status/backlog,M1,P0,M,Backlog,dispatch,Week 5,"MVP-014, MVP-010"
+MVP-016,Assignment accept/reject/expire API,"Implement assignment response endpoints and timeout/expiration behavior.
+
+Acceptance criteria:
+- Driver can accept or reject assignment exactly once.
+- Timeout transitions assignment to `EXPIRED`.
+- Job status updates correctly on each outcome.",type/feature;area/dispatch;priority/p0;status/backlog,M1,P0,M,Backlog,dispatch,Week 6,MVP-015
+MVP-017,Transition guards and idempotency protections,"Enforce legal state transitions and prevent duplicate writes from retries.
+
+Acceptance criteria:
+- Invalid state transitions are rejected with deterministic codes.
+- Idempotency keys prevent duplicate assignment state changes.
+- Replayed requests return original response shape.",type/task;area/backend;priority/p0;status/backlog,M1,P0,M,Backlog,backend,Week 6,"MVP-015, MVP-016, MVP-011"
+MVP-018,Dispatch lifecycle integration tests and API docs,"Complete end-to-end backend verification and publish API contract docs for web/mobile clients.
+
+Acceptance criteria:
+- Automated integration suite covers create -> dispatch -> accept/reject lifecycle.
+- API docs include request/response examples and error cases.
+- M1 readiness demo is possible using documented endpoints.",type/task;area/qa-release;priority/p0;status/backlog,M1,P0,M,Backlog,qa-release,Week 6,"MVP-009, MVP-010, MVP-015, MVP-016, MVP-017, MVP-012"
+MVP-019,[Epic] Dispatcher portal workflows,"Deliver dispatcher-facing web workflows for load/job management and dispatch operations.
+
+Acceptance criteria:
+- Dispatcher can create, view, and edit loads/jobs through UI.
+- Dispatcher can assign and reassign jobs to drivers.
+- Activity timeline shows key operational events.",type/epic;area/web-dispatcher;priority/p0;status/backlog,M2,P0,XL,Backlog,web-dispatcher,Weeks 7-9,MVP-018
+MVP-020,Dispatcher web shell and authenticated navigation,"Build app shell with authentication gate, role-aware navigation, and layout scaffolding.
+
+Acceptance criteria:
+- Unauthenticated users are redirected to sign-in.
+- Dispatcher role can access operations pages.
+- Navigation and route guards are covered by UI tests.",type/feature;area/web-dispatcher;priority/p0;status/backlog,M2,P0,M,Backlog,web-dispatcher,Week 7,"MVP-019, MVP-005"
+MVP-021,Load/job list and detail screens,"Implement searchable list and detail pages for loads/jobs.
+
+Acceptance criteria:
+- Lists show status and key schedule attributes.
+- Detail pages render full record information.
+- Empty/error/loading states are user-friendly.",type/feature;area/web-dispatcher;priority/p0;status/backlog,M2,P0,M,Backlog,web-dispatcher,Week 7,"MVP-020, MVP-009, MVP-010"
+MVP-022,Load/job create and edit forms,"Add form workflows for creating and updating loads/jobs with field validation feedback.
+
+Acceptance criteria:
+- Required field and timeline errors are surfaced inline.
+- Successful save updates list/detail views.
+- Form behavior supports keyboard-first operation.",type/feature;area/web-dispatcher;priority/p0;status/backlog,M2,P0,M,Backlog,web-dispatcher,Week 8,"MVP-021, MVP-011"
+MVP-023,Dispatch board with assign/reassign actions,"Build dispatch board UI for assignment decisions and queue management.
+
+Acceptance criteria:
+- Dispatcher can assign unassigned jobs to available drivers.
+- Reassignment flow is audited and visible.
+- Assignment outcomes refresh board status accurately.",type/feature;area/dispatch;priority/p0;status/backlog,M2,P0,L,Backlog,dispatch,Week 9,"MVP-021, MVP-015, MVP-016"
+MVP-024,Operations activity timeline,"Display chronological events for dispatch and status milestones on web UI.
+
+Acceptance criteria:
+- Timeline includes who/what/when for key events.
+- Event order remains consistent across refreshes.
+- Timeline filters by load or job context.",type/task;area/web-dispatcher;priority/p1;status/backlog,M2,P1,M,Backlog,web-dispatcher,Week 9,"MVP-023, MVP-012"
+MVP-025,[Epic] Driver mobile app core workflows,"Deliver driver app flows for assignments and status updates with robust retry behavior.
+
+Acceptance criteria:
+- Driver can authenticate and view assigned jobs.
+- Driver can accept/reject and update job status.
+- Offline retry path preserves updates without duplication.",type/epic;area/mobile-driver;priority/p0;status/backlog,M3,P0,XL,Backlog,mobile-driver,Weeks 10-14,MVP-018
+MVP-026,Mobile authentication and session management,"Implement secure mobile sign-in and token/session handling.
+
+Acceptance criteria:
+- Driver login/logout is functional.
+- Expired sessions redirect to re-auth safely.
+- Sensitive tokens are stored using platform secure storage.",type/feature;area/mobile-driver;priority/p0;status/backlog,M3,P0,M,Backlog,mobile-driver,Week 10,"MVP-025, MVP-005"
+MVP-027,Driver job inbox and detail view,"Show assigned jobs, key details, and next required action.
+
+Acceptance criteria:
+- Inbox lists active assignments with current state.
+- Detail screen shows pickup/dropoff and timeline context.
+- Pull-to-refresh/state sync works against backend.",type/feature;area/mobile-driver;priority/p0;status/backlog,M3,P0,M,Backlog,mobile-driver,Week 11,"MVP-026, MVP-015"
+MVP-028,Assignment accept/reject flow and push handling,"Implement assignment response UX and push-notification deep-link behavior.
+
+Acceptance criteria:
+- Driver can accept/reject directly from app.
+- Notification opens relevant assignment detail.
+- Response action reflects backend state within defined SLA.",type/feature;area/mobile-driver;priority/p0;status/backlog,M3,P0,M,Backlog,mobile-driver,Week 12,"MVP-027, MVP-016"
+MVP-029,Job status actions and backend integration,"Add status progression actions (`EN_ROUTE`, `ARRIVED`, `LOADED`, `IN_TRANSIT`, `DELIVERED`) and API integration.
+
+Acceptance criteria:
+- Only valid next status actions are enabled.
+- Status submission includes timestamp and contextual metadata.
+- Duplicate taps do not create duplicate status events.",type/feature;area/mobile-driver;priority/p0;status/backlog,M3,P0,L,Backlog,mobile-driver,Week 13,"MVP-027, MVP-017"
+MVP-030,"Offline queue, retry, and conflict handling","Queue driver updates offline and replay safely on reconnection.
+
+Acceptance criteria:
+- Offline updates persist across app restarts.
+- Replay honors idempotency and ordering guarantees.
+- Conflict resolution UX is defined for rejected transitions.",type/feature;area/mobile-driver;priority/p0;status/backlog,M3,P0,L,Backlog,mobile-driver,Week 14,MVP-029
+MVP-031,[Epic] Real-time status pipeline and live board,"Provide low-latency status fanout from driver actions to dispatcher UI.
+
+Acceptance criteria:
+- Status events are published and consumed through event pipeline.
+- Dispatcher views update without manual refresh.
+- Ordering and duplication protections are in place.",type/epic;area/realtime;priority/p0;status/backlog,M4,P0,L,Backlog,realtime,Weeks 15-16,"MVP-030, MVP-024"
+MVP-032,Status event pipeline and pub/sub integration,"Implement event publishing/consuming for status updates with durable processing semantics.
+
+Acceptance criteria:
+- Each accepted status update emits exactly one durable event.
+- Consumers process events with retry and poison-message handling.
+- Event payload schema is versioned and documented.",type/feature;area/realtime;priority/p0;status/backlog,M4,P0,M,Backlog,realtime,Week 15,"MVP-029, MVP-031"
+MVP-033,Dispatcher live board and timeline streaming updates,"Connect web UI to real-time channel and render live job state changes.
+
+Acceptance criteria:
+- Board and timeline update within target latency.
+- Out-of-order events are handled gracefully in UI.
+- Connection drops auto-recover with backfill sync.",type/feature;area/web-dispatcher;priority/p0;status/backlog,M4,P0,M,Backlog,web-dispatcher,Week 16,"MVP-032, MVP-023"
+MVP-034,Real-time latency monitoring and alerting,"Measure end-to-end status latency and alert when p95 exceeds target.
+
+Acceptance criteria:
+- Latency metrics are collected from submit-to-UI pipeline.
+- Dashboard shows p50/p95 trends.
+- Alert rule configured for >2s p95 breach threshold.",type/task;area/realtime;priority/p1;status/backlog,M4,P1,S,Backlog,realtime,Week 16,"MVP-032, MVP-006"
+MVP-035,[Epic] Billing readiness and export workflows,"Convert completed operations records into export-ready billing outputs.
+
+Acceptance criteria:
+- Billable readiness is deterministically computed.
+- Finance can generate and download export files.
+- Export runs are auditable and repeatable.",type/epic;area/billing;priority/p0;status/backlog,M5,P0,L,Backlog,billing,Week 17,MVP-018
+MVP-036,Billing-ready rules engine,"Mark jobs/loads as billable once required completion criteria are met.
+
+Acceptance criteria:
+- Billable status requires completed delivery conditions.
+- Rules are test-covered for happy and edge cases.
+- Non-billable records include reason codes.",type/feature;area/billing;priority/p0;status/backlog,M5,P0,M,Backlog,billing,Week 17,"MVP-035, MVP-029"
+MVP-037,CSV/JSON export generation and storage,"Implement export generation pipeline with file persistence.
+
+Acceptance criteria:
+- Export supports CSV and JSON formats.
+- Export file includes required finance fields and totals.
+- Export metadata is saved with run status.",type/feature;area/billing;priority/p0;status/backlog,M5,P0,M,Backlog,billing,Week 17,MVP-036
+MVP-038,Export history and retrieval in dispatcher UI,"Add billing export history list and download actions for authorized users.
+
+Acceptance criteria:
+- Export list includes status, creator, timestamp, and format.
+- Authorized users can download generated files.
+- Failed exports show actionable error context.",type/feature;area/billing;priority/p1;status/backlog,M5,P1,S,Backlog,billing,Week 17,"MVP-037, MVP-020"
+MVP-039,"[Epic] Security, reliability, observability hardening","Strengthen controls, failure handling, and observability for pilot readiness.
+
+Acceptance criteria:
+- Access controls are validated against role and tenant boundaries.
+- Async pathways support retries and dead-letter handling.
+- Operational dashboards and alerts support on-call troubleshooting.",type/epic;area/security;priority/p0;status/backlog,M6,P0,L,Backlog,security,Weeks 18-19,"MVP-034, MVP-038"
+MVP-040,RBAC hardening and tenant access checks,"Enforce least privilege and tenant data isolation for all critical endpoints.
+
+Acceptance criteria:
+- Cross-tenant data access attempts are blocked.
+- Permission matrix tests pass for all core roles.
+- Security review checklist is complete for MVP endpoints.",type/task;area/security;priority/p0;status/backlog,M6,P0,M,Backlog,security,Week 18,"MVP-039, MVP-005"
+MVP-041,"Retry, dead-letter, and replay handling for async flows","Add robust retry and dead-letter support for event and export pipelines.
+
+Acceptance criteria:
+- Configurable retry policies exist for transient failures.
+- Poison events are routed to dead-letter queue with metadata.
+- Replay tooling/process is documented and validated.",type/task;area/realtime;priority/p0;status/backlog,M6,P0,M,Backlog,realtime,Week 19,"MVP-039, MVP-032, MVP-037"
+MVP-042,"Observability dashboards, tracing, and alert tuning","Expand telemetry to include tracing and operations dashboards across services.
+
+Acceptance criteria:
+- Distributed trace IDs propagate across core services.
+- Dashboards include dispatch success, status lag, export failures.
+- Alert thresholds tuned to reduce false positives.",type/task;area/platform;priority/p1;status/backlog,M6,P1,M,Backlog,platform,Week 19,"MVP-039, MVP-006, MVP-041"
+MVP-043,Resilience and failure-mode test suite,"Validate behavior under failure conditions before pilot.
+
+Acceptance criteria:
+- Test suite covers network disruption, duplicate events, and partial outages.
+- Recovery runbooks are validated in staging drills.
+- Critical severity defects are triaged and resolved or accepted with mitigation.",type/task;area/qa-release;priority/p0;status/backlog,M6,P0,M,Backlog,qa-release,Week 19,"MVP-040, MVP-041, MVP-042"
+MVP-044,[Epic] QA/UAT and pilot launch readiness,"Complete final quality gates and execute controlled pilot rollout.
+
+Acceptance criteria:
+- End-to-end test pass supports MVP scope.
+- UAT sign-off is documented.
+- Pilot launch and hypercare plans are executed.",type/epic;area/qa-release;priority/p0;status/backlog,M7,P0,L,Backlog,qa-release,Weeks 20-22,MVP-043
+MVP-045,End-to-end QA regression and defect triage,"Run full regression suite and triage defects for release candidate readiness.
+
+Acceptance criteria:
+- Critical and high-priority defects are resolved before RC.
+- Regression report covers all MVP workflows.
+- Release candidate build is tagged for UAT.",type/task;area/qa-release;priority/p0;status/backlog,M7,P0,M,Backlog,qa-release,Week 20,"MVP-044, MVP-030, MVP-033, MVP-038"
+MVP-046,UAT execution and sign-off checklist,"Run user acceptance testing with operations and billing stakeholders.
+
+Acceptance criteria:
+- UAT scenarios cover dispatch, driver flows, real-time board, and billing exports.
+- Feedback and defects are logged with disposition.
+- Formal go/no-go sign-off is recorded.",type/task;area/product;priority/p0;status/backlog,M7,P0,M,Backlog,product,Week 21,MVP-045
+MVP-047,"Pilot onboarding, runbooks, and support operations","Prepare pilot users and support team with onboarding docs and operational runbooks.
+
+Acceptance criteria:
+- Pilot user onboarding checklist is complete.
+- Support runbook includes escalation paths and SLAs.
+- Incident communication templates are prepared.",type/task;area/qa-release;priority/p1;status/backlog,M7,P1,M,Backlog,qa-release,Week 21,"MVP-046, MVP-042"
+MVP-048,Launch hypercare and post-launch review,"Execute pilot launch monitoring, issue triage, and post-launch retrospective.
+
+Acceptance criteria:
+- Hypercare monitoring is active during launch window.
+- Pilot issues are triaged within agreed response times.
+- Post-launch report documents outcomes and next-phase recommendations.",type/task;area/qa-release;priority/p0;status/backlog,M7,P0,M,Backlog,qa-release,Week 22,MVP-047
