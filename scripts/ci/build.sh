@@ -16,28 +16,47 @@ run_npm_script() {
 
   echo "Running npm ${script_name} for ${surface}"
   pushd "$surface" >/dev/null
-
   if [[ -f package-lock.json ]]; then
     npm ci
   else
     npm install
   fi
-
   npm run "${script_name}"
   popd >/dev/null
   return 0
 }
 
-for surface in backend frontend; do
-  if [[ -d "$surface" ]]; then
-    if run_npm_script "$surface" build; then
-      ran_any=true
-    else
-      echo "::error::${surface} exists but does not expose package.json build script."
-      exit 1
-    fi
+run_maven_package() {
+  local surface="$1"
+
+  if [[ ! -f "${surface}/pom.xml" ]]; then
+    return 1
   fi
-done
+
+  echo "Running mvn package -DskipTests for ${surface}"
+  pushd "$surface" >/dev/null
+  mvn -B package -DskipTests
+  popd >/dev/null
+  return 0
+}
+
+if [[ -d "backend" ]]; then
+  if run_maven_package backend || run_npm_script backend build; then
+    ran_any=true
+  else
+    echo "::error::backend exists but does not expose a supported Maven or npm build command."
+    exit 1
+  fi
+fi
+
+if [[ -d "frontend" ]]; then
+  if run_npm_script frontend build || run_maven_package frontend; then
+    ran_any=true
+  else
+    echo "::error::frontend exists but does not expose a supported npm or Maven build command."
+    exit 1
+  fi
+fi
 
 if [[ "$ran_any" == "false" ]]; then
   echo "No backend/frontend surfaces found; build step intentionally skipped."

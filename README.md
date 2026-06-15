@@ -17,11 +17,10 @@ Required checks (branch protection):
 
 Current CI behavior:
 - The workflow looks for `backend` and `frontend` surfaces.
-- If a surface exists, it must expose npm scripts:
-  - `lint`
-  - `test`
-  - `build`
-- If a surface exists without these scripts, CI fails.
+- Supported build surface types:
+  - Maven (`pom.xml`) for Java/Spring services
+  - npm (`package.json`) for Node services
+- If a surface exists without supported Maven/npm commands, CI fails.
 
 CI scripts:
 - `scripts/ci/lint.sh`
@@ -55,3 +54,47 @@ If deployment fails:
   1. Identify last known good artifact/image.
   2. Redeploy to staging.
   3. Re-run staging health checks/smoke tests.
+
+## Backend stack and security scaffold
+Backend stack for issue `#5`:
+- Java 21
+- Spring Boot 3
+- Spring Security (HTTP Basic + RBAC scaffolding)
+
+Project path:
+- `backend`
+
+Run locally:
+1. `cd backend`
+2. `mvn spring-boot:run`
+
+### Auth scaffold
+All `/api/v1/**` endpoints require authenticated identity.
+
+Consistent auth error payloads:
+- 401 Unauthorized
+  - `{"error":"UNAUTHORIZED","message":"Authentication is required to access this resource."}`
+- 403 Forbidden
+  - `{"error":"FORBIDDEN","message":"Authenticated user is not allowed to access this resource."}`
+
+### Role claims to allowed actions
+- `DISPATCHER`
+  - `GET /api/v1/dispatch/jobs`
+- `DRIVER`
+  - `GET /api/v1/driver/assignments`
+- `BILLING`
+  - `GET /api/v1/billing/exports`
+- `ADMIN`
+  - Access to all role-scoped endpoints, including:
+  - `GET /api/v1/admin/users`
+
+Authenticated identity probe:
+- `GET /api/v1/me`
+
+### Scaffold credentials (development only)
+- `dispatcher / dispatcher-pass`
+- `driver / driver-pass`
+- `billing / billing-pass`
+- `admin / admin-pass`
+
+These credentials are for scaffolding and must be replaced with a real identity provider before production.

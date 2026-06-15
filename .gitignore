@@ -1,2 +1,5 @@
 *.pdf
 github-projects/*.md
+backend/node_modules/
+backend/dist/
+backend/target/
