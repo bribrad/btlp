@@ -16,28 +16,48 @@ run_npm_script() {
 
   echo "Running npm ${script_name} for ${surface}"
   pushd "$surface" >/dev/null
-
   if [[ -f package-lock.json ]]; then
     npm ci
   else
     npm install
   fi
-
   npm run "${script_name}"
   popd >/dev/null
   return 0
 }
 
-for surface in backend frontend; do
-  if [[ -d "$surface" ]]; then
-    if run_npm_script "$surface" lint; then
-      ran_any=true
-    else
-      echo "::error::${surface} exists but does not expose package.json lint script."
-      exit 1
-    fi
+run_maven_goal() {
+  local surface="$1"
+  local goal="$2"
+
+  if [[ ! -f "${surface}/pom.xml" ]]; then
+    return 1
   fi
-done
+
+  echo "Running mvn ${goal} for ${surface}"
+  pushd "$surface" >/dev/null
+  mvn -B "${goal}"
+  popd >/dev/null
+  return 0
+}
+
+if [[ -d "backend" ]]; then
+  if run_maven_goal backend validate || run_npm_script backend lint; then
+    ran_any=true
+  else
+    echo "::error::backend exists but does not expose a supported Maven or npm lint command."
+    exit 1
+  fi
+fi
+
+if [[ -d "frontend" ]]; then
+  if run_npm_script frontend lint || run_maven_goal frontend validate; then
+    ran_any=true
+  else
+    echo "::error::frontend exists but does not expose a supported npm or Maven lint command."
+    exit 1
+  fi
+fi
 
 if [[ "$ran_any" == "false" ]]; then
   echo "No backend/frontend surfaces found; lint step intentionally skipped."
