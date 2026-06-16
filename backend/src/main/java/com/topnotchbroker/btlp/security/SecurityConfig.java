@@ -29,7 +29,8 @@ public class SecurityConfig {
                 .accessDeniedHandler(accessDeniedHandler));
     http.authorizeHttpRequests(
         authz ->
-            authz.requestMatchers("/api/v1/dispatch/**").hasAnyRole("DISPATCHER", "ADMIN")
+            authz.requestMatchers("/actuator/**").permitAll()
+                .requestMatchers("/api/v1/dispatch/**").hasAnyRole("DISPATCHER", "ADMIN")
                 .requestMatchers("/api/v1/driver/**").hasAnyRole("DRIVER", "ADMIN")
                 .requestMatchers("/api/v1/billing/**").hasAnyRole("BILLING", "ADMIN")
                 .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")

@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
@@ -11,6 +13,8 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class ApiAuthenticationEntryPoint implements AuthenticationEntryPoint {
+
+  private static final Logger log = LoggerFactory.getLogger(ApiAuthenticationEntryPoint.class);
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
   @Override
@@ -19,6 +23,7 @@ public class ApiAuthenticationEntryPoint implements AuthenticationEntryPoint {
       HttpServletResponse response,
       AuthenticationException authException)
       throws IOException {
+    log.warn("Authentication required: uri={}", request.getRequestURI());
     response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
     response.setContentType(MediaType.APPLICATION_JSON_VALUE);
     OBJECT_MAPPER.writeValue(
