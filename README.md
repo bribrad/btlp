@@ -98,3 +98,31 @@ Authenticated identity probe:
 - `admin / admin-pass`
 
 These credentials are for scaffolding and must be replaced with a real identity provider before production.
+
+## Database & migrations
+The backend persists core domain data in **PostgreSQL**, with schema managed by **Liquibase**. Migrations live in `backend/src/main/resources/db/changelog/` (master: `db.changelog-master.yaml`; change sets under `changes/`) and run **automatically on application startup** in every environment.
+
+### Core entities (issue `#8`)
+`drivers`, `loads`, `jobs`, `assignments`, `job_status_events`, `export_runs`, `billing_records`, and the `billing_record_jobs` join table. Foreign keys and status `CHECK` constraints are enforced at the database level.
+
+### Run locally
+1. Start PostgreSQL: `docker compose -f backend/docker-compose.db.yml up -d`
+2. Run the app (applies migrations on startup): `cd backend && mvn spring-boot:run`
+
+Connection settings are read from environment variables, defaulting to the local compose database. The container publishes host port **5433** (not the default 5432) to avoid clashing with a native PostgreSQL install:
+- `SPRING_DATASOURCE_URL` (default `jdbc:postgresql://localhost:5433/btlp`)
+- `SPRING_DATASOURCE_USERNAME` (default `btlp`)
+- `SPRING_DATASOURCE_PASSWORD` (default `btlp`)
+
+For staging, set those three variables to point at the staging database; migrations apply on startup.
+
+### Rollback
+Every change set ships an explicit rollback. To roll back the last N change sets against the configured database:
+```
+cd backend
+mvn liquibase:rollback -Dliquibase.rollbackCount=1
+```
+Use `mvn liquibase:updateSQL` to preview pending SQL without applying it.
+
+### Tests
+Migrations and the rollback path are validated by `LiquibaseMigrationTest` against a real PostgreSQL using Testcontainers. Running `mvn test` therefore requires a running Docker daemon.

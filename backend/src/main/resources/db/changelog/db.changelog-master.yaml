@@ -1,0 +1,25 @@
+databaseChangeLog:
+  - include:
+      file: changes/0001_create_drivers.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/0002_create_loads.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/0003_create_jobs.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/0004_create_assignments.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/0005_create_job_status_events.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/0006_create_export_runs.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/0007_create_billing_records.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/0008_create_billing_record_jobs.sql
+      relativeToChangelogFile: true
