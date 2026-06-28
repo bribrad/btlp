@@ -16,6 +16,12 @@
   <description>Spring Boot backend scaffold for BTLP</description>
   <properties>
     <java.version>21</java.version>
+    <!-- Liquibase Maven plugin connection: local dev defaults. Overridden by the
+         datasource-from-env profile (SPRING_DATASOURCE_* env vars) or by
+         -Dliquibase.url / -Dliquibase.username / -Dliquibase.password. -->
+    <liquibase.url>jdbc:postgresql://localhost:5433/btlp</liquibase.url>
+    <liquibase.username>btlp</liquibase.username>
+    <liquibase.password>btlp</liquibase.password>
   </properties>
   <dependencies>
 
@@ -92,19 +98,35 @@
           mvn liquibase:update
           mvn liquibase:updateSQL
           mvn liquibase:rollback -Dliquibase.rollbackCount=8
-        Connection is read from environment variables (with localhost dev defaults)
-        so no credentials are committed.
+        Connection defaults to the local dev database (see <properties>). It is
+        overridden automatically when SPRING_DATASOURCE_* env vars are set
+        (datasource-from-env profile), or explicitly via -Dliquibase.url /
+        -Dliquibase.username / -Dliquibase.password.
       -->
       <plugin>
         <groupId>org.liquibase</groupId>
         <artifactId>liquibase-maven-plugin</artifactId>
         <configuration>
           <changeLogFile>src/main/resources/db/changelog/db.changelog-master.yaml</changeLogFile>
-          <url>${env.SPRING_DATASOURCE_URL}</url>
-          <username>${env.SPRING_DATASOURCE_USERNAME}</username>
-          <password>${env.SPRING_DATASOURCE_PASSWORD}</password>
         </configuration>
       </plugin>
     </plugins>
   </build>
+  <profiles>
+    <!-- When SPRING_DATASOURCE_* env vars are set (e.g. staging), the Liquibase
+         plugin uses them instead of the local dev defaults. -->
+    <profile>
+      <id>datasource-from-env</id>
+      <activation>
+        <property>
+          <name>env.SPRING_DATASOURCE_URL</name>
+        </property>
+      </activation>
+      <properties>
+        <liquibase.url>${env.SPRING_DATASOURCE_URL}</liquibase.url>
+        <liquibase.username>${env.SPRING_DATASOURCE_USERNAME}</liquibase.username>
+        <liquibase.password>${env.SPRING_DATASOURCE_PASSWORD}</liquibase.password>
+      </properties>
+    </profile>
+  </profiles>
 </project>

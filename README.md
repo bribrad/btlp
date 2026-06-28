@@ -123,6 +123,7 @@ cd backend
 mvn liquibase:rollback -Dliquibase.rollbackCount=1
 ```
 Use `mvn liquibase:updateSQL` to preview pending SQL without applying it.
+These commands target the local dev database by default; for another environment, export `SPRING_DATASOURCE_URL`/`SPRING_DATASOURCE_USERNAME`/`SPRING_DATASOURCE_PASSWORD`, or pass `-Dliquibase.url=… -Dliquibase.username=… -Dliquibase.password=…`.
 
 ### Tests
 Migrations and the rollback path are validated by `LiquibaseMigrationTest` against a real PostgreSQL using Testcontainers. Running `mvn test` therefore requires a running Docker daemon.
