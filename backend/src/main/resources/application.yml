@@ -1,3 +1,11 @@
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5433/btlp}
+    username: ${SPRING_DATASOURCE_USERNAME:btlp}
+    password: ${SPRING_DATASOURCE_PASSWORD:btlp}
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+
 management:
   endpoints:
     web:

@@ -1,0 +1,29 @@
+# Local development PostgreSQL for the btlp-backend service.
+# Credentials match the local defaults in application.yml.
+#
+# Usage:
+#   docker compose -f backend/docker-compose.db.yml up -d
+#   cd backend && mvn spring-boot:run   # Liquibase migrations apply on startup
+#   docker compose -f backend/docker-compose.db.yml down        # stop
+#   docker compose -f backend/docker-compose.db.yml down -v     # stop + wipe data
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: btlp-postgres
+    environment:
+      POSTGRES_DB: btlp
+      POSTGRES_USER: btlp
+      POSTGRES_PASSWORD: btlp
+    ports:
+      # Host port 5433 (not 5432) to avoid clashing with a native PostgreSQL on the default port.
+      - "5433:5432"
+    volumes:
+      - btlp-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U btlp -d btlp"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  btlp-postgres-data:
