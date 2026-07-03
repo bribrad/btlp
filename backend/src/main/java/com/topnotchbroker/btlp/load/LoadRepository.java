@@ -139,6 +139,15 @@ public class LoadRepository {
     return total != null ? total : 0L;
   }
 
+  public boolean existsById(UUID id) {
+    Boolean exists =
+        jdbc.queryForObject(
+            "SELECT EXISTS(SELECT 1 FROM loads WHERE id = :id)",
+            new MapSqlParameterSource().addValue("id", id, Types.OTHER),
+            Boolean.class);
+    return Boolean.TRUE.equals(exists);
+  }
+
   private static String stripToNull(String value) {
     if (value == null) {
       return null;

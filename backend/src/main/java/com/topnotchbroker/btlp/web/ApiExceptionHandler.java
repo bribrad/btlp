@@ -4,6 +4,7 @@ import com.topnotchbroker.btlp.security.ApiErrorResponse;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -27,6 +28,16 @@ public class ApiExceptionHandler {
   public ResponseEntity<ApiErrorResponse> handleNotFound(ResourceNotFoundException ex) {
     return ResponseEntity.status(HttpStatus.NOT_FOUND)
         .body(new ApiErrorResponse("NOT_FOUND", ex.getMessage()));
+  }
+
+  @ExceptionHandler(DataIntegrityViolationException.class)
+  public ResponseEntity<ApiErrorResponse> handleConflict(DataIntegrityViolationException ex) {
+    log.warn("Data integrity violation: {}", ex.getMostSpecificCause().getMessage());
+    return ResponseEntity.status(HttpStatus.CONFLICT)
+        .body(
+            new ApiErrorResponse(
+                "CONFLICT",
+                "Request conflicts with an existing resource (e.g. duplicate sequence for a load)."));
   }
 
   @ExceptionHandler(MethodArgumentNotValidException.class)
