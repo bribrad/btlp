@@ -12,6 +12,7 @@ import java.time.OffsetDateTime;
  * customerId}, {@code status}, and audit fields are intentionally omitted so they cannot be
  * changed through this path.
  */
+@ChronologicalWindows
 public record LoadUpdateRequest(
     @NotBlank @Size(max = 500) String origin,
     @NotBlank @Size(max = 500) String destination,
@@ -22,4 +23,4 @@ public record LoadUpdateRequest(
     @PositiveOrZero BigDecimal rateAmount,
     @Pattern(regexp = "^[A-Z]{3}$", message = "must be a 3-letter uppercase currency code")
         String rateCurrency,
-    @Size(max = 2000) String notes) {}
+    @Size(max = 2000) String notes) implements LoadWindows {}

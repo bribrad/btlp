@@ -168,6 +168,61 @@ class LoadApiIntegrationTest {
         .andExpect(jsonPath("$.error").value("UNAUTHORIZED"));
   }
 
+  @Test
+  void createWithPickupWindowStartAfterEndReturns400() throws Exception {
+    String body =
+        """
+        {"origin":"A","destination":"B",\
+        "pickupWindowStart":"2026-01-02T10:00:00Z","pickupWindowEnd":"2026-01-01T10:00:00Z"}
+        """;
+    mockMvc
+        .perform(
+            post("/api/v1/loads")
+                .with(httpBasic("dispatcher", "dispatcher-pass"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.error").value("VALIDATION_ERROR"))
+        .andExpect(jsonPath("$.message", containsString("pickupWindowEnd")));
+  }
+
+  @Test
+  void createWithPickupStartingAfterDropoffReturns400() throws Exception {
+    String body =
+        """
+        {"origin":"A","destination":"B",\
+        "pickupWindowStart":"2026-01-03T10:00:00Z","dropoffWindowStart":"2026-01-01T10:00:00Z"}
+        """;
+    mockMvc
+        .perform(
+            post("/api/v1/loads")
+                .with(httpBasic("dispatcher", "dispatcher-pass"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.error").value("VALIDATION_ERROR"))
+        .andExpect(jsonPath("$.message", containsString("dropoffWindowStart")));
+  }
+
+  @Test
+  void createWithWellOrderedWindowsSucceeds() throws Exception {
+    String body =
+        """
+        {"origin":"A","destination":"B",\
+        "pickupWindowStart":"2026-01-01T10:00:00Z","pickupWindowEnd":"2026-01-02T10:00:00Z",\
+        "dropoffWindowStart":"2026-01-03T10:00:00Z","dropoffWindowEnd":"2026-01-04T10:00:00Z"}
+        """;
+    mockMvc
+        .perform(
+            post("/api/v1/loads")
+                .with(httpBasic("dispatcher", "dispatcher-pass"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body))
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.pickupWindowStart").exists())
+        .andExpect(jsonPath("$.status").value("PLANNED"));
+  }
+
   private String createLoad() throws Exception {
     MvcResult result =
         mockMvc
