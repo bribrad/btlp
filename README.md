@@ -126,3 +126,17 @@ Use `mvn liquibase:updateSQL` to preview pending SQL without applying it.
 
 ### Tests
 Migrations and the rollback path are validated by `LiquibaseMigrationTest` against a real PostgreSQL using Testcontainers. Running `mvn test` therefore requires a running Docker daemon.
+
+## Audit trail
+Create/update actions on loads and jobs are recorded in the `audit_events` table for compliance and operations review. Each entry captures:
+- `entity_type` (`LOAD` or `JOB`) and `entity_id`
+- `action` (`CREATE` or `UPDATE`)
+- `actor` (the authenticated username that made the change)
+- `occurred_at` (timestamp)
+
+Entries are written in the same transaction as the change, so an audit row exists only if the change committed.
+
+### Retrieval (ADMIN only)
+- `GET /api/v1/audit` returns audit entries newest-first as a paged envelope (`content`, `page`, `size`, `totalElements`, `totalPages`).
+- Optional filters: `entityType` (`LOAD`/`JOB`) and `entityId` (UUID); pagination via `page`/`size`.
+- Example: `GET /api/v1/audit?entityType=LOAD&entityId=<id>` authenticated as an `ADMIN` user.
