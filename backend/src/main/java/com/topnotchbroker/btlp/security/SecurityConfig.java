@@ -31,6 +31,7 @@ public class SecurityConfig {
         authz ->
             authz.requestMatchers("/actuator/**").permitAll()
                 .requestMatchers("/api/v1/dispatch/**").hasAnyRole("DISPATCHER", "ADMIN")
+                .requestMatchers("/api/v1/loads/**").hasAnyRole("DISPATCHER", "ADMIN")
                 .requestMatchers("/api/v1/driver/**").hasAnyRole("DRIVER", "ADMIN")
                 .requestMatchers("/api/v1/billing/**").hasAnyRole("BILLING", "ADMIN")
                 .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
