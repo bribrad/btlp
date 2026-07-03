@@ -1,5 +1,8 @@
 package com.topnotchbroker.btlp.load;
 
+import com.topnotchbroker.btlp.audit.AuditAction;
+import com.topnotchbroker.btlp.audit.AuditEntityType;
+import com.topnotchbroker.btlp.audit.AuditService;
 import com.topnotchbroker.btlp.web.PagedResponse;
 import com.topnotchbroker.btlp.web.ResourceNotFoundException;
 import java.util.List;
@@ -14,9 +17,11 @@ public class LoadService {
   private static final String DEFAULT_CURRENCY = "USD";
 
   private final LoadRepository repository;
+  private final AuditService auditService;
 
-  public LoadService(LoadRepository repository) {
+  public LoadService(LoadRepository repository, AuditService auditService) {
     this.repository = repository;
+    this.auditService = auditService;
   }
 
   @Transactional
@@ -39,7 +44,9 @@ public class LoadService {
             actor,
             null,
             null);
-    return LoadResponse.from(repository.insert(toInsert));
+    Load created = repository.insert(toInsert);
+    auditService.record(AuditEntityType.LOAD, created.id(), AuditAction.CREATE);
+    return LoadResponse.from(created);
   }
 
   @Transactional(readOnly = true)
@@ -76,7 +83,9 @@ public class LoadService {
             actor,
             null,
             null);
-    return LoadResponse.from(repository.update(id, values).orElseThrow(() -> notFound(id)));
+    Load updated = repository.update(id, values).orElseThrow(() -> notFound(id));
+    auditService.record(AuditEntityType.LOAD, updated.id(), AuditAction.UPDATE);
+    return LoadResponse.from(updated);
   }
 
   private static String currencyOrDefault(String currency) {

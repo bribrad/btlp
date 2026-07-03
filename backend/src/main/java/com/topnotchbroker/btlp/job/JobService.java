@@ -1,5 +1,8 @@
 package com.topnotchbroker.btlp.job;
 
+import com.topnotchbroker.btlp.audit.AuditAction;
+import com.topnotchbroker.btlp.audit.AuditEntityType;
+import com.topnotchbroker.btlp.audit.AuditService;
 import com.topnotchbroker.btlp.load.LoadRepository;
 import com.topnotchbroker.btlp.web.PagedResponse;
 import com.topnotchbroker.btlp.web.ResourceNotFoundException;
@@ -14,10 +17,13 @@ public class JobService {
 
   private final JobRepository repository;
   private final LoadRepository loadRepository;
+  private final AuditService auditService;
 
-  public JobService(JobRepository repository, LoadRepository loadRepository) {
+  public JobService(
+      JobRepository repository, LoadRepository loadRepository, AuditService auditService) {
     this.repository = repository;
     this.loadRepository = loadRepository;
+    this.auditService = auditService;
   }
 
   @Transactional
@@ -37,7 +43,9 @@ public class JobService {
             request.scheduledAt(),
             null,
             null);
-    return JobResponse.from(repository.insert(toInsert));
+    Job created = repository.insert(toInsert);
+    auditService.record(AuditEntityType.JOB, created.id(), AuditAction.CREATE);
+    return JobResponse.from(created);
   }
 
   @Transactional(readOnly = true)
@@ -73,7 +81,9 @@ public class JobService {
             request.scheduledAt(),
             null,
             null);
-    return JobResponse.from(repository.update(id, values).orElseThrow(() -> notFound(id)));
+    Job updated = repository.update(id, values).orElseThrow(() -> notFound(id));
+    auditService.record(AuditEntityType.JOB, updated.id(), AuditAction.UPDATE);
+    return JobResponse.from(updated);
   }
 
   private static ResourceNotFoundException notFound(UUID id) {
