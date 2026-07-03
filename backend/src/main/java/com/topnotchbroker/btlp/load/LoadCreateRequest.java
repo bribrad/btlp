@@ -8,6 +8,7 @@ import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
 /** Request body for creating a load. Audit fields and status are set server-side. */
+@ChronologicalWindows
 public record LoadCreateRequest(
     @Size(max = 100) String customerId,
     @NotBlank @Size(max = 500) String origin,
@@ -19,4 +20,4 @@ public record LoadCreateRequest(
     @PositiveOrZero BigDecimal rateAmount,
     @Pattern(regexp = "^[A-Z]{3}$", message = "must be a 3-letter uppercase currency code")
         String rateCurrency,
-    @Size(max = 2000) String notes) {}
+    @Size(max = 2000) String notes) implements LoadWindows {}
