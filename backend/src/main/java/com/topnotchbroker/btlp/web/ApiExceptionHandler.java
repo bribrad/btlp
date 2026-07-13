@@ -30,6 +30,12 @@ public class ApiExceptionHandler {
         .body(new ApiErrorResponse("NOT_FOUND", ex.getMessage()));
   }
 
+  @ExceptionHandler(ValidationException.class)
+  public ResponseEntity<ApiErrorResponse> handleDomainValidation(ValidationException ex) {
+    return ResponseEntity.badRequest()
+        .body(new ApiErrorResponse("VALIDATION_ERROR", ex.getMessage()));
+  }
+
   @ExceptionHandler(DataIntegrityViolationException.class)
   public ResponseEntity<ApiErrorResponse> handleConflict(DataIntegrityViolationException ex) {
     log.warn("Data integrity violation: {}", ex.getMostSpecificCause().getMessage());

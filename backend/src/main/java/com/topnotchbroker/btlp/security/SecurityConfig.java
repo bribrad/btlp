@@ -33,6 +33,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/dispatch/**").hasAnyRole("DISPATCHER", "ADMIN")
                 .requestMatchers("/api/v1/loads/**").hasAnyRole("DISPATCHER", "ADMIN")
                 .requestMatchers("/api/v1/jobs/**").hasAnyRole("DISPATCHER", "ADMIN")
+                .requestMatchers("/api/v1/drivers/**").hasAnyRole("DISPATCHER", "ADMIN")
                 .requestMatchers("/api/v1/audit/**").hasRole("ADMIN")
                 .requestMatchers("/api/v1/driver/**").hasAnyRole("DRIVER", "ADMIN")
                 .requestMatchers("/api/v1/billing/**").hasAnyRole("BILLING", "ADMIN")
