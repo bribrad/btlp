@@ -36,6 +36,12 @@ public class ApiExceptionHandler {
         .body(new ApiErrorResponse("VALIDATION_ERROR", ex.getMessage()));
   }
 
+  @ExceptionHandler(ConflictException.class)
+  public ResponseEntity<ApiErrorResponse> handleDomainConflict(ConflictException ex) {
+    return ResponseEntity.status(HttpStatus.CONFLICT)
+        .body(new ApiErrorResponse("CONFLICT", ex.getMessage()));
+  }
+
   @ExceptionHandler(DataIntegrityViolationException.class)
   public ResponseEntity<ApiErrorResponse> handleConflict(DataIntegrityViolationException ex) {
     log.warn("Data integrity violation: {}", ex.getMostSpecificCause().getMessage());
