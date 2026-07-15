@@ -7,6 +7,8 @@ import com.topnotchbroker.btlp.driver.DriverRepository;
 import com.topnotchbroker.btlp.job.JobRepository;
 import com.topnotchbroker.btlp.web.ConflictException;
 import com.topnotchbroker.btlp.web.ResourceNotFoundException;
+import java.time.OffsetDateTime;
+import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,16 +23,19 @@ public class DispatchService {
   private final JobRepository jobRepository;
   private final DriverRepository driverRepository;
   private final AuditService auditService;
+  private final DispatchProperties properties;
 
   public DispatchService(
       AssignmentRepository assignmentRepository,
       JobRepository jobRepository,
       DriverRepository driverRepository,
-      AuditService auditService) {
+      AuditService auditService,
+      DispatchProperties properties) {
     this.assignmentRepository = assignmentRepository;
     this.jobRepository = jobRepository;
     this.driverRepository = driverRepository;
     this.auditService = auditService;
+    this.properties = properties;
   }
 
   @Transactional
@@ -45,8 +50,18 @@ public class DispatchService {
       throw new ConflictException(
           "Job " + request.jobId() + " already has a pending or accepted assignment.");
     }
-    Assignment created = assignmentRepository.insert(request.jobId(), request.driverId());
+    OffsetDateTime expiresAt = OffsetDateTime.now().plus(properties.assignmentTimeout());
+    Assignment created =
+        assignmentRepository.insert(request.jobId(), request.driverId(), expiresAt);
     auditService.record(AuditEntityType.ASSIGNMENT, created.id(), AuditAction.CREATE);
     return AssignmentResponse.from(created);
+  }
+
+  @Transactional(readOnly = true)
+  public AssignmentResponse getById(UUID id) {
+    return AssignmentResponse.from(
+        assignmentRepository
+            .findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Assignment not found: " + id)));
   }
 }

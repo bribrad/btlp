@@ -11,5 +11,6 @@ public record Assignment(
     AssignmentState state,
     OffsetDateTime assignedAt,
     OffsetDateTime acceptedAt,
+    OffsetDateTime expiresAt,
     OffsetDateTime createdAt,
     OffsetDateTime updatedAt) {}

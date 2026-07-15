@@ -11,6 +11,7 @@ public record AssignmentResponse(
     AssignmentState state,
     OffsetDateTime assignedAt,
     OffsetDateTime acceptedAt,
+    OffsetDateTime expiresAt,
     OffsetDateTime createdAt,
     OffsetDateTime updatedAt) {
 
@@ -22,6 +23,7 @@ public record AssignmentResponse(
         assignment.state(),
         assignment.assignedAt(),
         assignment.acceptedAt(),
+        assignment.expiresAt(),
         assignment.createdAt(),
         assignment.updatedAt());
   }
