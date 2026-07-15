@@ -1,0 +1,52 @@
+package com.topnotchbroker.btlp.dispatch;
+
+import com.topnotchbroker.btlp.audit.AuditAction;
+import com.topnotchbroker.btlp.audit.AuditEntityType;
+import com.topnotchbroker.btlp.audit.AuditService;
+import com.topnotchbroker.btlp.driver.DriverRepository;
+import com.topnotchbroker.btlp.job.JobRepository;
+import com.topnotchbroker.btlp.web.ConflictException;
+import com.topnotchbroker.btlp.web.ResourceNotFoundException;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+/**
+ * Application logic for dispatching a driver to a job. Creates a {@code PENDING} assignment and
+ * records an audit entry capturing the actor and assignment context.
+ */
+@Service
+public class DispatchService {
+
+  private final AssignmentRepository assignmentRepository;
+  private final JobRepository jobRepository;
+  private final DriverRepository driverRepository;
+  private final AuditService auditService;
+
+  public DispatchService(
+      AssignmentRepository assignmentRepository,
+      JobRepository jobRepository,
+      DriverRepository driverRepository,
+      AuditService auditService) {
+    this.assignmentRepository = assignmentRepository;
+    this.jobRepository = jobRepository;
+    this.driverRepository = driverRepository;
+    this.auditService = auditService;
+  }
+
+  @Transactional
+  public AssignmentResponse dispatch(DispatchRequest request) {
+    if (!jobRepository.existsById(request.jobId())) {
+      throw new ResourceNotFoundException("Job not found: " + request.jobId());
+    }
+    if (driverRepository.findById(request.driverId()).isEmpty()) {
+      throw new ResourceNotFoundException("Driver not found: " + request.driverId());
+    }
+    if (assignmentRepository.hasActiveAssignment(request.jobId())) {
+      throw new ConflictException(
+          "Job " + request.jobId() + " already has a pending or accepted assignment.");
+    }
+    Assignment created = assignmentRepository.insert(request.jobId(), request.driverId());
+    auditService.record(AuditEntityType.ASSIGNMENT, created.id(), AuditAction.CREATE);
+    return AssignmentResponse.from(created);
+  }
+}
