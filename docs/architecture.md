@@ -29,6 +29,7 @@ The backend is a single deployable Spring Boot application.
 
 - **Runtime / stack:** Java 21, Spring Boot 3.3.2, Maven. Module: `backend/` (`com.topnotchbroker.btlp`).
 - **Web layer:** `spring-boot-starter-web` (embedded Tomcat, port `8080`). `OperationsController` exposes representative role-scoped endpoints (`/api/v1/me`, `/api/v1/dispatch/jobs`, `/api/v1/driver/assignments`, `/api/v1/billing/exports`, `/api/v1/admin/users`).
+- **Dispatch & assignment lifecycle:** dispatcher and driver endpoints (`/api/v1/dispatch/**`, `/api/v1/driver/assignments/**`) implement the assignment state machine (dispatch → accept/reject/expire/complete) with timeout expiration, deterministic transition guards, and idempotency keys. Contract: `docs/dispatch-lifecycle-api.md`.
 - **Security:** `spring-boot-starter-security` with HTTP Basic and an in-memory user store (`SecurityConfig`). Roles: `DISPATCHER`, `DRIVER`, `BILLING`, `ADMIN`. `/actuator/**` is permitted unauthenticated; all `/api/v1/**` require authentication and the appropriate role. Consistent JSON error contracts for 401/403 (`ApiAuthenticationEntryPoint`, `ApiAccessDeniedHandler`, `ApiErrorResponse`).
 - **Observability:** `spring-boot-starter-actuator` + `micrometer-registry-prometheus`. Endpoints exposed: `health, metrics, prometheus, info`. Per-request correlation via `RequestIdFilter` (MDC `requestId` in the log pattern).
 
