@@ -7,5 +7,17 @@ public enum AssignmentState {
   REJECTED,
   EXPIRED,
   CANCELED,
-  COMPLETED
+  COMPLETED;
+
+  /**
+   * Whether a direct transition from this state to {@code target} is legal. Terminal states
+   * ({@code REJECTED}, {@code EXPIRED}, {@code CANCELED}, {@code COMPLETED}) allow no transitions.
+   */
+  public boolean canTransitionTo(AssignmentState target) {
+    return switch (this) {
+      case PENDING -> target == ACCEPTED || target == REJECTED || target == EXPIRED;
+      case ACCEPTED -> target == COMPLETED;
+      default -> false;
+    };
+  }
 }

@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -31,20 +32,26 @@ public class DriverAssignmentController {
   }
 
   @PostMapping("/{id}/accept")
-  public AssignmentResponse accept(@PathVariable UUID id) {
+  public AssignmentResponse accept(
+      @PathVariable UUID id,
+      @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey) {
     log.info("Accepting assignment id={}", id);
-    return assignmentService.accept(id);
+    return assignmentService.accept(id, idempotencyKey);
   }
 
   @PostMapping("/{id}/reject")
-  public AssignmentResponse reject(@PathVariable UUID id) {
+  public AssignmentResponse reject(
+      @PathVariable UUID id,
+      @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey) {
     log.info("Rejecting assignment id={}", id);
-    return assignmentService.reject(id);
+    return assignmentService.reject(id, idempotencyKey);
   }
 
   @PostMapping("/{id}/complete")
-  public AssignmentResponse complete(@PathVariable UUID id) {
+  public AssignmentResponse complete(
+      @PathVariable UUID id,
+      @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey) {
     log.info("Completing assignment id={}", id);
-    return assignmentService.complete(id);
+    return assignmentService.complete(id, idempotencyKey);
   }
 }

@@ -41,3 +41,6 @@ databaseChangeLog:
   - include:
       file: changes/0014_extend_assignments_state.sql
       relativeToChangelogFile: true
+  - include:
+      file: changes/0015_create_idempotency_keys.sql
+      relativeToChangelogFile: true

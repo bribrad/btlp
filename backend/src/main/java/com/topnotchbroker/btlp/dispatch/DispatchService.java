@@ -4,6 +4,7 @@ import com.topnotchbroker.btlp.audit.AuditAction;
 import com.topnotchbroker.btlp.audit.AuditEntityType;
 import com.topnotchbroker.btlp.audit.AuditService;
 import com.topnotchbroker.btlp.driver.DriverRepository;
+import com.topnotchbroker.btlp.idempotency.IdempotencyService;
 import com.topnotchbroker.btlp.job.JobRepository;
 import com.topnotchbroker.btlp.web.ConflictException;
 import com.topnotchbroker.btlp.web.ResourceNotFoundException;
@@ -24,22 +25,33 @@ public class DispatchService {
   private final DriverRepository driverRepository;
   private final AuditService auditService;
   private final DispatchProperties properties;
+  private final IdempotencyService idempotency;
 
   public DispatchService(
       AssignmentRepository assignmentRepository,
       JobRepository jobRepository,
       DriverRepository driverRepository,
       AuditService auditService,
-      DispatchProperties properties) {
+      DispatchProperties properties,
+      IdempotencyService idempotency) {
     this.assignmentRepository = assignmentRepository;
     this.jobRepository = jobRepository;
     this.driverRepository = driverRepository;
     this.auditService = auditService;
     this.properties = properties;
+    this.idempotency = idempotency;
   }
 
   @Transactional
-  public AssignmentResponse dispatch(DispatchRequest request) {
+  public AssignmentResponse dispatch(DispatchRequest request, String idempotencyKey) {
+    return idempotency.run(
+        idempotencyKey,
+        "dispatch:create:" + request.jobId() + ":" + request.driverId(),
+        AssignmentResponse.class,
+        () -> doDispatch(request));
+  }
+
+  private AssignmentResponse doDispatch(DispatchRequest request) {
     if (!jobRepository.existsById(request.jobId())) {
       throw new ResourceNotFoundException("Job not found: " + request.jobId());
     }

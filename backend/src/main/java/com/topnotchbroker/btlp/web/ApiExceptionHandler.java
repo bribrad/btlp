@@ -42,6 +42,12 @@ public class ApiExceptionHandler {
         .body(new ApiErrorResponse("CONFLICT", ex.getMessage()));
   }
 
+  @ExceptionHandler(InvalidStateTransitionException.class)
+  public ResponseEntity<ApiErrorResponse> handleInvalidTransition(InvalidStateTransitionException ex) {
+    return ResponseEntity.status(HttpStatus.CONFLICT)
+        .body(new ApiErrorResponse("INVALID_STATE_TRANSITION", ex.getMessage()));
+  }
+
   @ExceptionHandler(DataIntegrityViolationException.class)
   public ResponseEntity<ApiErrorResponse> handleConflict(DataIntegrityViolationException ex) {
     log.warn("Data integrity violation: {}", ex.getMostSpecificCause().getMessage());
