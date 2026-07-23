@@ -6,5 +6,6 @@ public enum AssignmentState {
   ACCEPTED,
   REJECTED,
   EXPIRED,
-  CANCELED
+  CANCELED,
+  COMPLETED
 }

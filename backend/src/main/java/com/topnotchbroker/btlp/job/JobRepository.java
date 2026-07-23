@@ -32,6 +32,9 @@ public class JobRepository {
       RETURNING *
       """;
 
+  private static final String UPDATE_STATUS_SQL =
+      "UPDATE jobs SET status = :status, updated_at = now() WHERE id = :id RETURNING *";
+
   private static final String SELECT_BY_ID_SQL = "SELECT * FROM jobs WHERE id = :id";
 
   private static final String FIND_BY_LOAD_SQL =
@@ -85,6 +88,14 @@ public class JobRepository {
             .addValue("sequence", values.sequence(), Types.INTEGER)
             .addValue("scheduledAt", values.scheduledAt(), Types.TIMESTAMP_WITH_TIMEZONE);
     return jdbc.query(UPDATE_SQL, params, ROW_MAPPER).stream().findFirst();
+  }
+
+  public Optional<Job> updateStatus(UUID id, JobStatus status) {
+    MapSqlParameterSource params =
+        new MapSqlParameterSource()
+            .addValue("id", id, Types.OTHER)
+            .addValue("status", status.name(), Types.VARCHAR);
+    return jdbc.query(UPDATE_STATUS_SQL, params, ROW_MAPPER).stream().findFirst();
   }
 
   public Optional<Job> findById(UUID id) {

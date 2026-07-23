@@ -23,3 +23,11 @@ management:
 logging:
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%X{requestId:-no-request-id}] %logger{36} - %msg%n"
+
+# Assignment lifecycle tunables (see com.topnotchbroker.btlp.dispatch.DispatchProperties).
+btlp:
+  dispatch:
+    # How long a PENDING assignment stays valid before it can be expired (ISO-8601 duration).
+    assignment-timeout: PT15M
+    # How often the background sweeper expires stale pending assignments (ISO-8601 duration).
+    expiry-sweep-interval: PT1M
