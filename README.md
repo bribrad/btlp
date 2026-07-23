@@ -140,3 +140,13 @@ Entries are written in the same transaction as the change, so an audit row exist
 - `GET /api/v1/audit` returns audit entries newest-first as a paged envelope (`content`, `page`, `size`, `totalElements`, `totalPages`).
 - Optional filters: `entityType` (`LOAD`/`JOB`) and `entityId` (UUID); pagination via `page`/`size`.
 - Example: `GET /api/v1/audit?entityType=LOAD&entityId=<id>` authenticated as an `ADMIN` user.
+
+## Dispatch & assignment lifecycle
+The dispatch and assignment lifecycle (epic `#13`) lets dispatchers assign jobs to drivers and drivers accept/reject/complete them, with timeout-based expiration and idempotent, guarded state transitions.
+- Dispatcher: `POST /api/v1/dispatch/assignments` (create a `PENDING` assignment) and `GET /api/v1/dispatch/assignments/{id}`.
+- Driver: `POST /api/v1/driver/assignments/{id}/accept` | `/reject` | `/complete`, and `GET /api/v1/driver/assignments/{id}`.
+- Outcomes: accept → job `ASSIGNED` + driver `ON_TRIP`; reject/expire → job returns to the actionable queue; complete → job `COMPLETED` + driver `AVAILABLE`.
+- Mutating endpoints accept an optional `Idempotency-Key` header; illegal transitions return `409 INVALID_STATE_TRANSITION`.
+- Expiration is configurable via `btlp.dispatch.assignment-timeout` (default `PT15M`) and `btlp.dispatch.expiry-sweep-interval` (default `PT1M`).
+
+Full API contract, error cases, and an M1 readiness demo: [`docs/dispatch-lifecycle-api.md`](docs/dispatch-lifecycle-api.md).
