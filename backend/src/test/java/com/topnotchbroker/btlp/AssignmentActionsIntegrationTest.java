@@ -128,7 +128,7 @@ class AssignmentActionsIntegrationTest {
     mockMvc
         .perform(post(DRIVER + "/{id}/accept", assignmentId).with(httpBasic("driver", "driver-pass")))
         .andExpect(status().isConflict())
-        .andExpect(jsonPath("$.error").value("CONFLICT"));
+        .andExpect(jsonPath("$.error").value("INVALID_STATE_TRANSITION"));
   }
 
   @Test
@@ -139,7 +139,7 @@ class AssignmentActionsIntegrationTest {
         .perform(
             post(DRIVER + "/{id}/complete", assignmentId).with(httpBasic("driver", "driver-pass")))
         .andExpect(status().isConflict())
-        .andExpect(jsonPath("$.error").value("CONFLICT"));
+        .andExpect(jsonPath("$.error").value("INVALID_STATE_TRANSITION"));
   }
 
   @Test
@@ -185,7 +185,7 @@ class AssignmentActionsIntegrationTest {
     mockMvc
         .perform(post(DRIVER + "/{id}/accept", assignmentId).with(httpBasic("driver", "driver-pass")))
         .andExpect(status().isConflict())
-        .andExpect(jsonPath("$.error").value("CONFLICT"));
+        .andExpect(jsonPath("$.error").value("INVALID_STATE_TRANSITION"));
   }
 
   @Test

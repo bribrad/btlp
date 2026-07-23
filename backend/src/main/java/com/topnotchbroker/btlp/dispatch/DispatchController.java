@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -32,8 +33,10 @@ public class DispatchController {
 
   @PostMapping
   public ResponseEntity<AssignmentResponse> dispatch(
-      @Valid @RequestBody DispatchRequest request, UriComponentsBuilder uriBuilder) {
-    AssignmentResponse created = dispatchService.dispatch(request);
+      @Valid @RequestBody DispatchRequest request,
+      @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
+      UriComponentsBuilder uriBuilder) {
+    AssignmentResponse created = dispatchService.dispatch(request, idempotencyKey);
     URI location =
         uriBuilder
             .path("/api/v1/dispatch/assignments/{id}")

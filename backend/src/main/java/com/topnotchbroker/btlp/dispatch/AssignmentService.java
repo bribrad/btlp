@@ -5,9 +5,10 @@ import com.topnotchbroker.btlp.audit.AuditEntityType;
 import com.topnotchbroker.btlp.audit.AuditService;
 import com.topnotchbroker.btlp.driver.DriverAvailability;
 import com.topnotchbroker.btlp.driver.DriverRepository;
+import com.topnotchbroker.btlp.idempotency.IdempotencyService;
 import com.topnotchbroker.btlp.job.JobRepository;
 import com.topnotchbroker.btlp.job.JobStatus;
-import com.topnotchbroker.btlp.web.ConflictException;
+import com.topnotchbroker.btlp.web.InvalidStateTransitionException;
 import com.topnotchbroker.btlp.web.ResourceNotFoundException;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -31,16 +32,19 @@ public class AssignmentService {
   private final JobRepository jobRepository;
   private final DriverRepository driverRepository;
   private final AuditService auditService;
+  private final IdempotencyService idempotency;
 
   public AssignmentService(
       AssignmentRepository assignmentRepository,
       JobRepository jobRepository,
       DriverRepository driverRepository,
-      AuditService auditService) {
+      AuditService auditService,
+      IdempotencyService idempotency) {
     this.assignmentRepository = assignmentRepository;
     this.jobRepository = jobRepository;
     this.driverRepository = driverRepository;
     this.auditService = auditService;
+    this.idempotency = idempotency;
   }
 
   @Transactional(readOnly = true)
@@ -51,14 +55,20 @@ public class AssignmentService {
 
   /**
    * Driver accepts a pending assignment: assignment &rarr; ACCEPTED, job &rarr; ASSIGNED, driver
-   * &rarr; ON_TRIP. Rejects an assignment whose acceptance window has already elapsed.
+   * &rarr; ON_TRIP. Rejects an assignment whose acceptance window has already elapsed. Idempotent
+   * when an {@code Idempotency-Key} is supplied.
    */
   @Transactional
-  public AssignmentResponse accept(UUID id) {
+  public AssignmentResponse accept(UUID id, String idempotencyKey) {
+    return idempotency.run(
+        idempotencyKey, "assignment:accept:" + id, AssignmentResponse.class, () -> doAccept(id));
+  }
+
+  private AssignmentResponse doAccept(UUID id) {
     Assignment current = assignmentRepository.findById(id).orElseThrow(() -> notFound(id));
-    requireState(current, AssignmentState.PENDING, "accepted");
+    requireTransition(current, AssignmentState.ACCEPTED);
     if (isPastDeadline(current)) {
-      throw new ConflictException(
+      throw new InvalidStateTransitionException(
           "Assignment " + id + " has expired and can no longer be accepted.");
     }
     Assignment accepted = assignmentRepository.accept(id).orElseThrow(() -> concurrentlyChanged(id));
@@ -69,11 +79,19 @@ public class AssignmentService {
     return AssignmentResponse.from(accepted);
   }
 
-  /** Driver rejects a pending assignment: assignment &rarr; REJECTED; the job stays actionable. */
+  /**
+   * Driver rejects a pending assignment: assignment &rarr; REJECTED; the job stays actionable.
+   * Idempotent when an {@code Idempotency-Key} is supplied.
+   */
   @Transactional
-  public AssignmentResponse reject(UUID id) {
+  public AssignmentResponse reject(UUID id, String idempotencyKey) {
+    return idempotency.run(
+        idempotencyKey, "assignment:reject:" + id, AssignmentResponse.class, () -> doReject(id));
+  }
+
+  private AssignmentResponse doReject(UUID id) {
     Assignment current = assignmentRepository.findById(id).orElseThrow(() -> notFound(id));
-    requireState(current, AssignmentState.PENDING, "rejected");
+    requireTransition(current, AssignmentState.REJECTED);
     Assignment rejected = assignmentRepository.reject(id).orElseThrow(() -> concurrentlyChanged(id));
     auditService.record(AuditEntityType.ASSIGNMENT, rejected.id(), AuditAction.UPDATE);
     return AssignmentResponse.from(rejected);
@@ -81,12 +99,17 @@ public class AssignmentService {
 
   /**
    * Driver completes an accepted assignment: assignment &rarr; COMPLETED, job &rarr; COMPLETED,
-   * driver &rarr; AVAILABLE.
+   * driver &rarr; AVAILABLE. Idempotent when an {@code Idempotency-Key} is supplied.
    */
   @Transactional
-  public AssignmentResponse complete(UUID id) {
+  public AssignmentResponse complete(UUID id, String idempotencyKey) {
+    return idempotency.run(
+        idempotencyKey, "assignment:complete:" + id, AssignmentResponse.class, () -> doComplete(id));
+  }
+
+  private AssignmentResponse doComplete(UUID id) {
     Assignment current = assignmentRepository.findById(id).orElseThrow(() -> notFound(id));
-    requireState(current, AssignmentState.ACCEPTED, "completed");
+    requireTransition(current, AssignmentState.COMPLETED);
     Assignment completed =
         assignmentRepository.complete(id).orElseThrow(() -> concurrentlyChanged(id));
     jobRepository.updateStatus(completed.jobId(), JobStatus.COMPLETED);
@@ -114,21 +137,22 @@ public class AssignmentService {
     return assignment.expiresAt() != null && !assignment.expiresAt().isAfter(OffsetDateTime.now());
   }
 
-  private static void requireState(Assignment assignment, AssignmentState required, String verb) {
-    if (assignment.state() != required) {
-      throw new ConflictException(
+  private static void requireTransition(Assignment assignment, AssignmentState target) {
+    if (!assignment.state().canTransitionTo(target)) {
+      throw new InvalidStateTransitionException(
           "Assignment "
               + assignment.id()
-              + " is "
+              + " cannot transition from "
               + assignment.state()
-              + " and cannot be "
-              + verb
+              + " to "
+              + target
               + ".");
     }
   }
 
-  private static ConflictException concurrentlyChanged(UUID id) {
-    return new ConflictException("Assignment " + id + " changed state concurrently; please retry.");
+  private static InvalidStateTransitionException concurrentlyChanged(UUID id) {
+    return new InvalidStateTransitionException(
+        "Assignment " + id + " changed state concurrently; please retry.");
   }
 
   private static ResourceNotFoundException notFound(UUID id) {
