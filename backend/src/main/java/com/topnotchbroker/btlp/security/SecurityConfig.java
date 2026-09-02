@@ -1,5 +1,6 @@
 package com.topnotchbroker.btlp.security;
 
+import java.util.List;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
@@ -11,6 +12,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
 public class SecurityConfig {
@@ -21,6 +25,7 @@ public class SecurityConfig {
       ApiAccessDeniedHandler accessDeniedHandler)
       throws Exception {
     http.csrf(AbstractHttpConfigurer::disable);
+    http.cors(Customizer.withDefaults());
     http.httpBasic(Customizer.withDefaults());
     http.exceptionHandling(
         exceptions ->
@@ -34,7 +39,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/loads/**").hasAnyRole("DISPATCHER", "ADMIN")
                 .requestMatchers("/api/v1/jobs/**").hasAnyRole("DISPATCHER", "ADMIN")
                 .requestMatchers("/api/v1/drivers/**").hasAnyRole("DISPATCHER", "ADMIN")
-                .requestMatchers("/api/v1/audit/**").hasRole("ADMIN")
+                .requestMatchers("/api/v1/audit/**").hasAnyRole("DISPATCHER", "ADMIN")
                 .requestMatchers("/api/v1/driver/**").hasAnyRole("DRIVER", "ADMIN")
                 .requestMatchers("/api/v1/billing/**").hasAnyRole("BILLING", "ADMIN")
                 .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
@@ -42,6 +47,25 @@ public class SecurityConfig {
                 .anyRequest()
                 .authenticated());
     return http.build();
+  }
+
+  /**
+   * Permits the Vite dev server (http://localhost:5173) to call all API endpoints during local
+   * development. Authorization headers are exposed so the browser can read the Basic auth
+   * challenge. This configuration is intentionally permissive for the dev scaffold and must be
+   * tightened (or replaced with an env-specific profile) before production deployment.
+   */
+  @Bean
+  CorsConfigurationSource corsConfigurationSource() {
+    CorsConfiguration config = new CorsConfiguration();
+    config.setAllowedOrigins(List.of("http://localhost:5173"));
+    config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+    config.setAllowedHeaders(List.of("*"));
+    config.setExposedHeaders(List.of("Authorization", "Location"));
+    config.setAllowCredentials(true);
+    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    source.registerCorsConfiguration("/api/v1/**", config);
+    return source;
   }
 
   @Bean
