@@ -1,5 +1,7 @@
 import { useCallback } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { Plus } from 'lucide-react'
+import { ButtonLink } from '@/components/ButtonLink'
 import { FilterSelect } from '@/components/FilterSelect'
 import { PageHeader } from '@/components/PageHeader'
 import { Pagination } from '@/components/Pagination'
@@ -56,6 +58,12 @@ export function LoadsListPage() {
       <PageHeader
         title="Loads"
         description="Every load in the system, newest first."
+        actions={
+          <ButtonLink to="/loads/new">
+            <Plus className="h-4 w-4" />
+            New load
+          </ButtonLink>
+        }
       />
 
       <div className="flex flex-wrap items-center gap-2">
