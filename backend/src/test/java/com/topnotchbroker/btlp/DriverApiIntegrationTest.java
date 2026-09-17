@@ -34,6 +34,9 @@ class DriverApiIntegrationTest {
 
   @BeforeEach
   void clean() {
+    // Clear dependants first: assignments left by other test classes reference drivers, and the
+    // Postgres container is shared JVM-wide, so the delete order has to respect the FKs.
+    jdbcTemplate.update("DELETE FROM assignments");
     jdbcTemplate.update("DELETE FROM drivers");
   }
 

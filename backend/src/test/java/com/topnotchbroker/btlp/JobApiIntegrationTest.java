@@ -37,6 +37,8 @@ class JobApiIntegrationTest {
 
   @BeforeEach
   void setup() {
+    // Assignments reference jobs; the shared container means another class may have left some.
+    jdbcTemplate.update("DELETE FROM assignments");
     jdbcTemplate.update("DELETE FROM jobs");
     jdbcTemplate.update("DELETE FROM loads");
     loadId =
