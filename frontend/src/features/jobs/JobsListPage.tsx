@@ -1,5 +1,7 @@
 import { useCallback } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { Plus } from 'lucide-react'
+import { ButtonLink } from '@/components/ButtonLink'
 import { FilterSelect } from '@/components/FilterSelect'
 import { PageHeader } from '@/components/PageHeader'
 import { Pagination } from '@/components/Pagination'
@@ -56,6 +58,12 @@ export function JobsListPage() {
       <PageHeader
         title="Jobs"
         description="Pickup and dropoff legs across all loads."
+        actions={
+          <ButtonLink to={loadId ? `/jobs/new?loadId=${loadId}` : '/jobs/new'}>
+            <Plus className="h-4 w-4" />
+            New job
+          </ButtonLink>
+        }
       />
 
       <div className="flex flex-wrap items-center gap-2">

@@ -3,24 +3,29 @@ import { render } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import type { Job, Load, PagedResponse } from '@/types'
 
-/** Query client for tests: no retries and no caching between cases. */
-export function createTestQueryClient() {
+/**
+ * Query client for tests: no retries and no caching between cases. Pass `gcTime` when the test
+ * seeds a query and inspects it later — the default of 0 evicts entries that have no observer.
+ */
+export function createTestQueryClient({ gcTime = 0 } = {}) {
   return new QueryClient({
-    defaultOptions: { queries: { retry: false, gcTime: 0, staleTime: 0 } },
+    defaultOptions: { queries: { retry: false, gcTime, staleTime: 0 } },
   })
 }
 
 interface RenderOptions {
   route?: string
   path?: string
+  /** Pass a client when the test needs to inspect the cache after a mutation. */
+  queryClient?: QueryClient
 }
 
 export function renderRoute(
   element: React.ReactNode,
-  { route = '/', path = '*' }: RenderOptions = {},
+  { route = '/', path = '*', queryClient = createTestQueryClient() }: RenderOptions = {},
 ) {
   return render(
-    <QueryClientProvider client={createTestQueryClient()}>
+    <QueryClientProvider client={queryClient}>
       <MemoryRouter initialEntries={[route]}>
         <Routes>
           <Route path={path} element={element} />

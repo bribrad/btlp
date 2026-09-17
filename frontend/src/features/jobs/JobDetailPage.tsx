@@ -1,4 +1,6 @@
+import { Pencil } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
+import { ButtonLink } from '@/components/ButtonLink'
 import { DetailCard, DetailField, DetailList } from '@/components/DetailCard'
 import { PageHeader } from '@/components/PageHeader'
 import { DetailSkeleton, ErrorState } from '@/components/QueryStates'
@@ -36,7 +38,15 @@ export function JobDetailPage() {
         title={`${formatEnum(job.jobType)} · Leg ${job.sequence}`}
         description={`Job ${job.id}`}
         backTo={{ to: '/jobs', label: 'Back to jobs' }}
-        actions={<StatusBadge status={job.status} className="mt-1" />}
+        actions={
+          <div className="flex items-center gap-3">
+            <StatusBadge status={job.status} />
+            <ButtonLink to={`/jobs/${job.id}/edit`} variant="secondary">
+              <Pencil className="h-3.5 w-3.5" />
+              Edit
+            </ButtonLink>
+          </div>
+        }
       />
 
       <div className="grid gap-6 lg:grid-cols-2">

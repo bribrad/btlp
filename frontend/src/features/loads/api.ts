@@ -1,4 +1,9 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query'
 import { api } from '@/api/client'
 import type { Load, LoadStatus, PagedResponse } from '@/types'
 
@@ -42,5 +47,28 @@ export function useLoad(id: string | undefined) {
     queryKey: loadKeys.detail(id ?? ''),
     queryFn: () => api.get<Load>(`/loads/${id}`),
     enabled: Boolean(id),
+  })
+}
+
+export function useCreateLoad() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (body: unknown) => api.post<Load>('/loads', body),
+    onSuccess: created => {
+      queryClient.setQueryData(loadKeys.detail(created.id), created)
+      // Every cached list is now stale: the new load may match any of their filters.
+      queryClient.invalidateQueries({ queryKey: loadKeys.all })
+    },
+  })
+}
+
+export function useUpdateLoad(id: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (body: unknown) => api.put<Load>(`/loads/${id}`, body),
+    onSuccess: updated => {
+      queryClient.setQueryData(loadKeys.detail(id), updated)
+      queryClient.invalidateQueries({ queryKey: loadKeys.all })
+    },
   })
 }

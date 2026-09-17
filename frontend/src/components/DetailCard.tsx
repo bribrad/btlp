@@ -2,16 +2,21 @@ import { cn } from '@/lib/utils'
 
 export function DetailCard({
   title,
+  action,
   children,
   className,
 }: {
   title: string
+  action?: React.ReactNode
   children: React.ReactNode
   className?: string
 }) {
   return (
     <section className={cn('rounded-lg border bg-card', className)}>
-      <h2 className="border-b px-4 py-3 text-sm font-medium">{title}</h2>
+      <div className="flex items-center justify-between gap-3 border-b px-4 py-3">
+        <h2 className="text-sm font-medium">{title}</h2>
+        {action}
+      </div>
       <div className="p-4">{children}</div>
     </section>
   )

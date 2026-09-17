@@ -1,4 +1,9 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query'
 import { api } from '@/api/client'
 import { buildListQuery } from '@/features/loads/api'
 import type { Job, JobStatus, JobType, PagedResponse } from '@/types'
@@ -33,5 +38,27 @@ export function useJob(id: string | undefined) {
     queryKey: jobKeys.detail(id ?? ''),
     queryFn: () => api.get<Job>(`/jobs/${id}`),
     enabled: Boolean(id),
+  })
+}
+
+export function useCreateJob() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (body: unknown) => api.post<Job>('/jobs', body),
+    onSuccess: created => {
+      queryClient.setQueryData(jobKeys.detail(created.id), created)
+      queryClient.invalidateQueries({ queryKey: jobKeys.all })
+    },
+  })
+}
+
+export function useUpdateJob(id: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (body: unknown) => api.put<Job>(`/jobs/${id}`, body),
+    onSuccess: updated => {
+      queryClient.setQueryData(jobKeys.detail(id), updated)
+      queryClient.invalidateQueries({ queryKey: jobKeys.all })
+    },
   })
 }

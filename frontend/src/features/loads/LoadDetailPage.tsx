@@ -1,4 +1,6 @@
+import { Pencil, Plus } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
+import { ButtonLink } from '@/components/ButtonLink'
 import { DetailCard, DetailField, DetailList } from '@/components/DetailCard'
 import { PageHeader } from '@/components/PageHeader'
 import { DetailSkeleton, EmptyState, ErrorState } from '@/components/QueryStates'
@@ -41,7 +43,15 @@ export function LoadDetailPage() {
         title={`${load.origin} → ${load.destination}`}
         description={`Load ${load.id}`}
         backTo={{ to: '/loads', label: 'Back to loads' }}
-        actions={<StatusBadge status={load.status} className="mt-1" />}
+        actions={
+          <div className="flex items-center gap-3">
+            <StatusBadge status={load.status} />
+            <ButtonLink to={`/loads/${load.id}/edit`} variant="secondary">
+              <Pencil className="h-3.5 w-3.5" />
+              Edit
+            </ButtonLink>
+          </div>
+        }
       />
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -97,7 +107,15 @@ function LoadJobs({ loadId }: { loadId: string }) {
   const jobs = data?.content ?? []
 
   return (
-    <DetailCard title="Jobs">
+    <DetailCard
+      title="Jobs"
+      action={
+        <ButtonLink to={`/jobs/new?loadId=${loadId}`} variant="secondary">
+          <Plus className="h-3.5 w-3.5" />
+          Add job
+        </ButtonLink>
+      }
+    >
       {isPending ? (
         <DetailSkeleton />
       ) : isError ? (
