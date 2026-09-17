@@ -48,12 +48,19 @@ public class LoadController {
     return loadService.getById(id);
   }
 
+  /**
+   * Lists loads newest-first. {@code q} is a contains-match over origin, destination, and customer;
+   * {@code status} narrows to a single lifecycle status. Both are optional.
+   */
   @GetMapping
   public PagedResponse<LoadResponse> list(
-      @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
+      @RequestParam(required = false) String q,
+      @RequestParam(required = false) LoadStatus status,
+      @RequestParam(defaultValue = "0") int page,
+      @RequestParam(defaultValue = "20") int size) {
     int safePage = Math.max(page, 0);
     int safeSize = Math.min(Math.max(size, 1), MAX_PAGE_SIZE);
-    return loadService.list(safePage, safeSize);
+    return loadService.list(q, status, safePage, safeSize);
   }
 
   @PutMapping("/{id}")

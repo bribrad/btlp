@@ -2,6 +2,7 @@ package com.topnotchbroker.btlp.job;
 
 import java.sql.Types;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -37,16 +38,10 @@ public class JobRepository {
 
   private static final String SELECT_BY_ID_SQL = "SELECT * FROM jobs WHERE id = :id";
 
-  private static final String FIND_BY_LOAD_SQL =
-      "SELECT * FROM jobs WHERE load_id = :loadId ORDER BY sequence ASC LIMIT :limit OFFSET :offset";
+  /** Jobs of a single load read as a route, so they are ordered by leg instead of by age. */
+  private static final String ORDER_BY_SEQUENCE = " ORDER BY sequence ASC";
 
-  private static final String COUNT_BY_LOAD_SQL =
-      "SELECT count(*) FROM jobs WHERE load_id = :loadId";
-
-  private static final String FIND_PAGE_SQL =
-      "SELECT * FROM jobs ORDER BY created_at DESC, id DESC LIMIT :limit OFFSET :offset";
-
-  private static final String COUNT_SQL = "SELECT count(*) FROM jobs";
+  private static final String ORDER_BY_NEWEST = " ORDER BY created_at DESC, id DESC";
 
   private static final String NEXT_SEQUENCE_SQL =
       "SELECT COALESCE(MAX(sequence), 0) + 1 FROM jobs WHERE load_id = :loadId";
@@ -103,32 +98,26 @@ public class JobRepository {
     return jdbc.query(SELECT_BY_ID_SQL, params, ROW_MAPPER).stream().findFirst();
   }
 
-  public List<Job> findByLoad(UUID loadId, int limit, int offset) {
-    MapSqlParameterSource params =
-        new MapSqlParameterSource()
-            .addValue("loadId", loadId, Types.OTHER)
-            .addValue("limit", limit)
-            .addValue("offset", offset);
-    return jdbc.query(FIND_BY_LOAD_SQL, params, ROW_MAPPER);
+  /**
+   * Returns one page of jobs, optionally narrowed by parent load, status, and type. A null filter
+   * value means "no filter". Jobs scoped to a load are ordered by sequence; otherwise newest first.
+   */
+  public List<Job> findPage(
+      UUID loadId, JobStatus status, JobType jobType, int limit, int offset) {
+    MapSqlParameterSource params = new MapSqlParameterSource();
+    StringBuilder sql = new StringBuilder("SELECT * FROM jobs");
+    appendFilters(sql, params, loadId, status, jobType);
+    sql.append(loadId != null ? ORDER_BY_SEQUENCE : ORDER_BY_NEWEST);
+    sql.append(" LIMIT :limit OFFSET :offset");
+    params.addValue("limit", limit).addValue("offset", offset);
+    return jdbc.query(sql.toString(), params, ROW_MAPPER);
   }
 
-  public long countByLoad(UUID loadId) {
-    Long total =
-        jdbc.queryForObject(
-            COUNT_BY_LOAD_SQL,
-            new MapSqlParameterSource().addValue("loadId", loadId, Types.OTHER),
-            Long.class);
-    return total != null ? total : 0L;
-  }
-
-  public List<Job> findPage(int limit, int offset) {
-    MapSqlParameterSource params =
-        new MapSqlParameterSource().addValue("limit", limit).addValue("offset", offset);
-    return jdbc.query(FIND_PAGE_SQL, params, ROW_MAPPER);
-  }
-
-  public long count() {
-    Long total = jdbc.queryForObject(COUNT_SQL, new MapSqlParameterSource(), Long.class);
+  public long count(UUID loadId, JobStatus status, JobType jobType) {
+    MapSqlParameterSource params = new MapSqlParameterSource();
+    StringBuilder sql = new StringBuilder("SELECT count(*) FROM jobs");
+    appendFilters(sql, params, loadId, status, jobType);
+    Long total = jdbc.queryForObject(sql.toString(), params, Long.class);
     return total != null ? total : 0L;
   }
 
@@ -148,5 +137,29 @@ public class JobRepository {
             new MapSqlParameterSource().addValue("loadId", loadId, Types.OTHER),
             Integer.class);
     return next != null ? next : 1;
+  }
+
+  private static void appendFilters(
+      StringBuilder sql,
+      MapSqlParameterSource params,
+      UUID loadId,
+      JobStatus status,
+      JobType jobType) {
+    List<String> conditions = new ArrayList<>();
+    if (loadId != null) {
+      conditions.add("load_id = :loadId");
+      params.addValue("loadId", loadId, Types.OTHER);
+    }
+    if (status != null) {
+      conditions.add("status = :status");
+      params.addValue("status", status.name(), Types.VARCHAR);
+    }
+    if (jobType != null) {
+      conditions.add("job_type = :jobType");
+      params.addValue("jobType", jobType.name(), Types.VARCHAR);
+    }
+    if (!conditions.isEmpty()) {
+      sql.append(" WHERE ").append(String.join(" AND ", conditions));
+    }
   }
 }
