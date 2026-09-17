@@ -3,6 +3,10 @@ import { AuthGuard } from '@/features/auth/AuthGuard'
 import { LoginPage } from '@/features/auth/LoginPage'
 import { PageLayout } from '@/components/PageLayout'
 import { PlaceholderPage } from '@/components/PlaceholderPage'
+import { LoadsListPage } from '@/features/loads/LoadsListPage'
+import { LoadDetailPage } from '@/features/loads/LoadDetailPage'
+import { JobsListPage } from '@/features/jobs/JobsListPage'
+import { JobDetailPage } from '@/features/jobs/JobDetailPage'
 
 export const router = createBrowserRouter([
   {
@@ -26,10 +30,10 @@ export const router = createBrowserRouter([
     ),
     children: [
       { index: true, element: <Navigate to="/loads" replace /> },
-      { path: 'loads', element: <PlaceholderPage title="Loads" /> },
-      { path: 'loads/:id', element: <PlaceholderPage title="Load Detail" /> },
-      { path: 'jobs', element: <PlaceholderPage title="Jobs" /> },
-      { path: 'jobs/:id', element: <PlaceholderPage title="Job Detail" /> },
+      { path: 'loads', element: <LoadsListPage /> },
+      { path: 'loads/:id', element: <LoadDetailPage /> },
+      { path: 'jobs', element: <JobsListPage /> },
+      { path: 'jobs/:id', element: <JobDetailPage /> },
       { path: 'dispatch', element: <PlaceholderPage title="Dispatch Board" /> },
       { path: 'timeline', element: <PlaceholderPage title="Activity Timeline" /> },
     ],

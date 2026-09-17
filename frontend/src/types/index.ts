@@ -1,11 +1,12 @@
 // ── Shared ──────────────────────────────────────────────────────────────────
 
+/** Mirrors the backend `PagedResponse` envelope returned by every list endpoint. */
 export interface PagedResponse<T> {
   content: T[]
+  page: number // 0-based page index
+  size: number
   totalElements: number
   totalPages: number
-  number: number // 0-based page index
-  size: number
 }
 
 export interface ApiError {
@@ -15,35 +16,53 @@ export interface ApiError {
 
 // ── Load ─────────────────────────────────────────────────────────────────────
 
-export type LoadStatus = 'PLANNED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED'
+export const LOAD_STATUSES = [
+  'PLANNED',
+  'ASSIGNED',
+  'IN_TRANSIT',
+  'DELIVERED',
+  'COMPLETED',
+  'CANCELED',
+] as const
+
+export type LoadStatus = (typeof LOAD_STATUSES)[number]
 
 export interface Load {
   id: string
+  customerId: string | null
   origin: string
   destination: string
-  pickupWindowStart: string
-  pickupWindowEnd: string
-  dropoffWindowStart: string
-  dropoffWindowEnd: string
-  rate: number
+  pickupWindowStart: string | null
+  pickupWindowEnd: string | null
+  dropoffWindowStart: string | null
+  dropoffWindowEnd: string | null
+  rateAmount: number | null
+  rateCurrency: string | null
+  notes: string | null
   status: LoadStatus
-  customerId?: string
+  createdBy: string | null
+  updatedBy: string | null
   createdAt: string
   updatedAt: string
 }
 
 // ── Job ──────────────────────────────────────────────────────────────────────
 
-export type JobStatus =
-  | 'UNASSIGNED'
-  | 'ASSIGNED'
-  | 'EN_ROUTE'
-  | 'ARRIVED'
-  | 'IN_PROGRESS'
-  | 'COMPLETED'
-  | 'CANCELLED'
+export const JOB_STATUSES = [
+  'UNASSIGNED',
+  'ASSIGNED',
+  'EN_ROUTE',
+  'ARRIVED',
+  'IN_PROGRESS',
+  'COMPLETED',
+  'CANCELED',
+] as const
 
-export type JobType = 'PICKUP' | 'DROPOFF'
+export type JobStatus = (typeof JOB_STATUSES)[number]
+
+export const JOB_TYPES = ['PICKUP', 'DROPOFF'] as const
+
+export type JobType = (typeof JOB_TYPES)[number]
 
 export interface Job {
   id: string
@@ -51,14 +70,16 @@ export interface Job {
   jobType: JobType
   sequence: number
   status: JobStatus
-  scheduledAt?: string
+  scheduledAt: string | null
   createdAt: string
   updatedAt: string
 }
 
 // ── Driver ───────────────────────────────────────────────────────────────────
 
-export type DriverAvailability = 'AVAILABLE' | 'ON_TRIP' | 'OFF_DUTY'
+export type DriverAvailability = 'AVAILABLE' | 'UNAVAILABLE' | 'ON_TRIP'
+
+export type DriverStatus = 'ACTIVE' | 'INACTIVE'
 
 export interface Driver {
   id: string
@@ -66,6 +87,7 @@ export interface Driver {
   phone: string
   licenseNumber: string
   availability: DriverAvailability
+  status: DriverStatus
   createdAt: string
   updatedAt: string
 }
@@ -77,8 +99,8 @@ export type AssignmentState =
   | 'ACCEPTED'
   | 'REJECTED'
   | 'EXPIRED'
+  | 'CANCELED'
   | 'COMPLETED'
-  | 'CANCELLED'
 
 export interface Assignment {
   id: string
@@ -94,14 +116,15 @@ export interface Assignment {
 
 // ── Audit ────────────────────────────────────────────────────────────────────
 
-export type AuditEntityType = 'LOAD' | 'JOB' | 'ASSIGNMENT' | 'DRIVER'
+export type AuditEntityType = 'LOAD' | 'JOB' | 'ASSIGNMENT'
+
+export type AuditAction = 'CREATE' | 'UPDATE'
 
 export interface AuditEvent {
   id: string
-  action: string
   entityType: AuditEntityType
   entityId: string
-  actorUsername: string
-  timestamp: string
-  details?: Record<string, unknown>
+  action: AuditAction
+  actor: string
+  occurredAt: string
 }

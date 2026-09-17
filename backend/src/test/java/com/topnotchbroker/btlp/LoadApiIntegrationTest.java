@@ -43,6 +43,9 @@ class LoadApiIntegrationTest {
 
   @BeforeEach
   void cleanLoads() {
+    // Clear dependants first: rows left by other test classes would block the delete via FK.
+    jdbcTemplate.update("DELETE FROM assignments");
+    jdbcTemplate.update("DELETE FROM jobs");
     jdbcTemplate.update("DELETE FROM loads");
   }
 
@@ -94,6 +97,124 @@ class LoadApiIntegrationTest {
         .andExpect(jsonPath("$.content", hasSize(greaterThanOrEqualTo(1))))
         .andExpect(jsonPath("$.totalElements").value(1))
         .andExpect(jsonPath("$.page").value(0));
+  }
+
+  @Test
+  void listFiltersByCaseInsensitiveSearchAcrossOriginDestinationAndCustomer() throws Exception {
+    insertLoad("ACME", "Chicago, IL", "Dallas, TX", "PLANNED");
+    insertLoad("GLOBEX", "Denver, CO", "Phoenix, AZ", "PLANNED");
+
+    mockMvc
+        .perform(
+            get("/api/v1/loads")
+                .param("q", "chicago")
+                .with(httpBasic("dispatcher", "dispatcher-pass")))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.content", hasSize(1)))
+        .andExpect(jsonPath("$.content[0].origin").value("Chicago, IL"))
+        .andExpect(jsonPath("$.totalElements").value(1));
+
+    mockMvc
+        .perform(
+            get("/api/v1/loads")
+                .param("q", "phoenix")
+                .with(httpBasic("dispatcher", "dispatcher-pass")))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.content", hasSize(1)))
+        .andExpect(jsonPath("$.content[0].destination").value("Phoenix, AZ"));
+
+    mockMvc
+        .perform(
+            get("/api/v1/loads")
+                .param("q", "globex")
+                .with(httpBasic("dispatcher", "dispatcher-pass")))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.content", hasSize(1)))
+        .andExpect(jsonPath("$.content[0].customerId").value("GLOBEX"));
+  }
+
+  @Test
+  void listSearchMissWithNoMatchesReturnsEmptyPage() throws Exception {
+    insertLoad("ACME", "Chicago, IL", "Dallas, TX", "PLANNED");
+    mockMvc
+        .perform(
+            get("/api/v1/loads")
+                .param("q", "nowhere")
+                .with(httpBasic("dispatcher", "dispatcher-pass")))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.content", hasSize(0)))
+        .andExpect(jsonPath("$.totalElements").value(0))
+        .andExpect(jsonPath("$.totalPages").value(0));
+  }
+
+  @Test
+  void listSearchTreatsWildcardsAsLiterals() throws Exception {
+    insertLoad("ACME", "Chicago, IL", "Dallas, TX", "PLANNED");
+    mockMvc
+        .perform(
+            get("/api/v1/loads").param("q", "%").with(httpBasic("dispatcher", "dispatcher-pass")))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.content", hasSize(0)))
+        .andExpect(jsonPath("$.totalElements").value(0));
+  }
+
+  @Test
+  void listWithBlankSearchIsIgnored() throws Exception {
+    insertLoad("ACME", "Chicago, IL", "Dallas, TX", "PLANNED");
+    insertLoad("GLOBEX", "Denver, CO", "Phoenix, AZ", "PLANNED");
+    mockMvc
+        .perform(
+            get("/api/v1/loads")
+                .param("q", "   ")
+                .with(httpBasic("dispatcher", "dispatcher-pass")))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.content", hasSize(2)))
+        .andExpect(jsonPath("$.totalElements").value(2));
+  }
+
+  @Test
+  void listFiltersByStatus() throws Exception {
+    insertLoad("ACME", "Chicago, IL", "Dallas, TX", "PLANNED");
+    insertLoad("GLOBEX", "Denver, CO", "Phoenix, AZ", "IN_TRANSIT");
+
+    mockMvc
+        .perform(
+            get("/api/v1/loads")
+                .param("status", "IN_TRANSIT")
+                .with(httpBasic("dispatcher", "dispatcher-pass")))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.content", hasSize(1)))
+        .andExpect(jsonPath("$.content[0].status").value("IN_TRANSIT"))
+        .andExpect(jsonPath("$.totalElements").value(1));
+  }
+
+  @Test
+  void listCombinesSearchAndStatus() throws Exception {
+    insertLoad("ACME", "Chicago, IL", "Dallas, TX", "PLANNED");
+    insertLoad("ACME", "Chicago, IL", "Miami, FL", "IN_TRANSIT");
+
+    mockMvc
+        .perform(
+            get("/api/v1/loads")
+                .param("q", "chicago")
+                .param("status", "IN_TRANSIT")
+                .with(httpBasic("dispatcher", "dispatcher-pass")))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.content", hasSize(1)))
+        .andExpect(jsonPath("$.content[0].destination").value("Miami, FL"))
+        .andExpect(jsonPath("$.totalElements").value(1));
+  }
+
+  @Test
+  void listWithUnknownStatusReturns400() throws Exception {
+    mockMvc
+        .perform(
+            get("/api/v1/loads")
+                .param("status", "NOT_A_STATUS")
+                .with(httpBasic("dispatcher", "dispatcher-pass")))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.error").value("VALIDATION_ERROR"))
+        .andExpect(jsonPath("$.message", containsString("status")));
   }
 
   @Test
@@ -221,6 +342,17 @@ class LoadApiIntegrationTest {
         .andExpect(status().isCreated())
         .andExpect(jsonPath("$.pickupWindowStart").exists())
         .andExpect(jsonPath("$.status").value("PLANNED"));
+  }
+
+  /** Seeds a load directly so tests can pin a status the API does not let callers set. */
+  private void insertLoad(String customerId, String origin, String destination, String status) {
+    jdbcTemplate.update(
+        "INSERT INTO loads (customer_id, origin, destination, status, created_by, updated_by)"
+            + " VALUES (?, ?, ?, ?, 'dispatcher', 'dispatcher')",
+        customerId,
+        origin,
+        destination,
+        status);
   }
 
   private String createLoad() throws Exception {

@@ -49,14 +49,20 @@ public class JobController {
     return jobService.getById(id);
   }
 
+  /**
+   * Lists jobs, optionally narrowed by parent load, status, and type. Jobs scoped to a load come
+   * back in sequence order; otherwise newest first.
+   */
   @GetMapping
   public PagedResponse<JobResponse> list(
       @RequestParam(required = false) UUID loadId,
+      @RequestParam(required = false) JobStatus status,
+      @RequestParam(required = false) JobType jobType,
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "20") int size) {
     int safePage = Math.max(page, 0);
     int safeSize = Math.min(Math.max(size, 1), MAX_PAGE_SIZE);
-    return jobService.list(loadId, safePage, safeSize);
+    return jobService.list(loadId, status, jobType, safePage, safeSize);
   }
 
   @PutMapping("/{id}")

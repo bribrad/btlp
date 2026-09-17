@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from './useAuth'
 import { ApiRequestError } from '@/api/client'
+import { errorMessage } from '@/lib/errors'
 import { Truck } from 'lucide-react'
 
 export function LoginPage() {
@@ -32,7 +33,7 @@ export function LoginPage() {
           setError(err.message)
         }
       } else {
-        setError(err.message)
+        setError(errorMessage(err))
       }
     } finally {
       setLoading(false)

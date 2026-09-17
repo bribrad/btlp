@@ -1,5 +1,6 @@
 package com.topnotchbroker.btlp;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -100,6 +101,79 @@ class JobApiIntegrationTest {
         .andExpect(jsonPath("$.content[0].sequence").value(1))
         .andExpect(jsonPath("$.content[1].sequence").value(2))
         .andExpect(jsonPath("$.totalElements").value(2));
+  }
+
+  @Test
+  void listFiltersByJobType() throws Exception {
+    createJob("PICKUP", 1);
+    createJob("DROPOFF", 2);
+    mockMvc
+        .perform(
+            get("/api/v1/jobs")
+                .param("jobType", "DROPOFF")
+                .with(httpBasic("dispatcher", "dispatcher-pass")))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.content", hasSize(1)))
+        .andExpect(jsonPath("$.content[0].jobType").value("DROPOFF"))
+        .andExpect(jsonPath("$.totalElements").value(1));
+  }
+
+  @Test
+  void listFiltersByStatus() throws Exception {
+    String assignedId = createJobReturningId("PICKUP", 1);
+    createJob("DROPOFF", 2);
+    jdbcTemplate.update("UPDATE jobs SET status = 'EN_ROUTE' WHERE id = ?::uuid", assignedId);
+
+    mockMvc
+        .perform(
+            get("/api/v1/jobs")
+                .param("status", "EN_ROUTE")
+                .with(httpBasic("dispatcher", "dispatcher-pass")))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.content", hasSize(1)))
+        .andExpect(jsonPath("$.content[0].id").value(assignedId))
+        .andExpect(jsonPath("$.totalElements").value(1));
+  }
+
+  @Test
+  void listCombinesLoadStatusAndTypeFilters() throws Exception {
+    String pickupId = createJobReturningId("PICKUP", 1);
+    createJob("DROPOFF", 2);
+    jdbcTemplate.update("UPDATE jobs SET status = 'ARRIVED' WHERE id = ?::uuid", pickupId);
+
+    mockMvc
+        .perform(
+            get("/api/v1/jobs")
+                .param("loadId", loadId.toString())
+                .param("status", "ARRIVED")
+                .param("jobType", "PICKUP")
+                .with(httpBasic("dispatcher", "dispatcher-pass")))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.content", hasSize(1)))
+        .andExpect(jsonPath("$.content[0].id").value(pickupId));
+
+    mockMvc
+        .perform(
+            get("/api/v1/jobs")
+                .param("loadId", loadId.toString())
+                .param("status", "ARRIVED")
+                .param("jobType", "DROPOFF")
+                .with(httpBasic("dispatcher", "dispatcher-pass")))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.content", hasSize(0)))
+        .andExpect(jsonPath("$.totalElements").value(0));
+  }
+
+  @Test
+  void listWithUnknownStatusReturns400() throws Exception {
+    mockMvc
+        .perform(
+            get("/api/v1/jobs")
+                .param("status", "NOT_A_STATUS")
+                .with(httpBasic("dispatcher", "dispatcher-pass")))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.error").value("VALIDATION_ERROR"))
+        .andExpect(jsonPath("$.message", containsString("status")));
   }
 
   @Test

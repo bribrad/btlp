@@ -13,7 +13,6 @@ export interface Credentials {
 
 export function saveCredentials(creds: Credentials) {
   sessionStorage.setItem(SESSION_KEY, JSON.stringify(creds))
-  alert(JSON.stringify(creds))
 }
 
 export function loadCredentials(): Credentials | null {

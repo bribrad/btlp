@@ -54,18 +54,14 @@ public class JobService {
   }
 
   @Transactional(readOnly = true)
-  public PagedResponse<JobResponse> list(UUID loadId, int page, int size) {
+  public PagedResponse<JobResponse> list(
+      UUID loadId, JobStatus status, JobType jobType, int page, int size) {
     int offset = page * size;
-    List<JobResponse> content;
-    long total;
-    if (loadId != null) {
-      content =
-          repository.findByLoad(loadId, size, offset).stream().map(JobResponse::from).toList();
-      total = repository.countByLoad(loadId);
-    } else {
-      content = repository.findPage(size, offset).stream().map(JobResponse::from).toList();
-      total = repository.count();
-    }
+    List<JobResponse> content =
+        repository.findPage(loadId, status, jobType, size, offset).stream()
+            .map(JobResponse::from)
+            .toList();
+    long total = repository.count(loadId, status, jobType);
     return PagedResponse.of(content, page, size, total);
   }
 

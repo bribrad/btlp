@@ -55,11 +55,12 @@ public class LoadService {
   }
 
   @Transactional(readOnly = true)
-  public PagedResponse<LoadResponse> list(int page, int size) {
+  public PagedResponse<LoadResponse> list(String search, LoadStatus status, int page, int size) {
+    String term = blankToNull(search);
     int offset = page * size;
     List<LoadResponse> content =
-        repository.findPage(size, offset).stream().map(LoadResponse::from).toList();
-    long total = repository.count();
+        repository.findPage(term, status, size, offset).stream().map(LoadResponse::from).toList();
+    long total = repository.count(term, status);
     return PagedResponse.of(content, page, size, total);
   }
 
@@ -86,6 +87,10 @@ public class LoadService {
     Load updated = repository.update(id, values).orElseThrow(() -> notFound(id));
     auditService.record(AuditEntityType.LOAD, updated.id(), AuditAction.UPDATE);
     return LoadResponse.from(updated);
+  }
+
+  private static String blankToNull(String value) {
+    return value == null || value.isBlank() ? null : value;
   }
 
   private static String currencyOrDefault(String currency) {

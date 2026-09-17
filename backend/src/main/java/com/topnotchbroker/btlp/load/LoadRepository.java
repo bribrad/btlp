@@ -2,6 +2,7 @@ package com.topnotchbroker.btlp.load;
 
 import java.sql.Types;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -55,10 +56,8 @@ public class LoadRepository {
 
   private static final String SELECT_BY_ID_SQL = "SELECT * FROM loads WHERE id = :id";
 
-  private static final String FIND_PAGE_SQL =
-      "SELECT * FROM loads ORDER BY created_at DESC, id DESC LIMIT :limit OFFSET :offset";
-
-  private static final String COUNT_SQL = "SELECT count(*) FROM loads";
+  private static final String SEARCH_CONDITION =
+      "(origin ILIKE :search OR destination ILIKE :search OR customer_id ILIKE :search)";
 
   private static final RowMapper<Load> ROW_MAPPER =
       (rs, rowNum) ->
@@ -128,14 +127,24 @@ public class LoadRepository {
     return jdbc.query(SELECT_BY_ID_SQL, params, ROW_MAPPER).stream().findFirst();
   }
 
-  public List<Load> findPage(int limit, int offset) {
-    MapSqlParameterSource params =
-        new MapSqlParameterSource().addValue("limit", limit).addValue("offset", offset);
-    return jdbc.query(FIND_PAGE_SQL, params, ROW_MAPPER);
+  /**
+   * Returns one page of loads, newest first, optionally narrowed by a free-text search over
+   * origin/destination/customer and by status. A null filter value means "no filter".
+   */
+  public List<Load> findPage(String search, LoadStatus status, int limit, int offset) {
+    MapSqlParameterSource params = new MapSqlParameterSource();
+    StringBuilder sql = new StringBuilder("SELECT * FROM loads");
+    appendFilters(sql, params, search, status);
+    sql.append(" ORDER BY created_at DESC, id DESC LIMIT :limit OFFSET :offset");
+    params.addValue("limit", limit).addValue("offset", offset);
+    return jdbc.query(sql.toString(), params, ROW_MAPPER);
   }
 
-  public long count() {
-    Long total = jdbc.queryForObject(COUNT_SQL, new MapSqlParameterSource(), Long.class);
+  public long count(String search, LoadStatus status) {
+    MapSqlParameterSource params = new MapSqlParameterSource();
+    StringBuilder sql = new StringBuilder("SELECT count(*) FROM loads");
+    appendFilters(sql, params, search, status);
+    Long total = jdbc.queryForObject(sql.toString(), params, Long.class);
     return total != null ? total : 0L;
   }
 
@@ -146,6 +155,29 @@ public class LoadRepository {
             new MapSqlParameterSource().addValue("id", id, Types.OTHER),
             Boolean.class);
     return Boolean.TRUE.equals(exists);
+  }
+
+  private static void appendFilters(
+      StringBuilder sql, MapSqlParameterSource params, String search, LoadStatus status) {
+    List<String> conditions = new ArrayList<>();
+    if (search != null) {
+      conditions.add(SEARCH_CONDITION);
+      params.addValue("search", likePattern(search), Types.VARCHAR);
+    }
+    if (status != null) {
+      conditions.add("status = :status");
+      params.addValue("status", status.name(), Types.VARCHAR);
+    }
+    if (!conditions.isEmpty()) {
+      sql.append(" WHERE ").append(String.join(" AND ", conditions));
+    }
+  }
+
+  /** Wraps a search term for a contains-match, escaping the LIKE wildcards it may contain. */
+  private static String likePattern(String search) {
+    String escaped =
+        search.strip().replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
+    return "%" + escaped + "%";
   }
 
   private static String stripToNull(String value) {
