@@ -18,6 +18,7 @@ import liquibase.database.jvm.JdbcConnection;
 import liquibase.exception.DatabaseException;
 import liquibase.resource.ClassLoaderResourceAccessor;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -49,7 +50,30 @@ class LiquibaseMigrationTest {
     "billing_record_jobs"
   };
 
+  /**
+   * Cleared before each test because rollbacks legitimately re-introduce narrower constraints.
+   * Rolling back {@code 0015} re-adds {@code entity_type IN ('LOAD','JOB')} to audit_events, which
+   * a row written by a sibling dispatch test ({@code entity_type = 'ASSIGNMENT'}) violates — the
+   * container is shared JVM-wide, so this class must not inherit anyone's data.
+   */
+  private static final String TRUNCATE_ALL =
+      """
+      TRUNCATE TABLE
+          audit_events, idempotency_keys,
+          billing_record_jobs, billing_records, export_runs,
+          job_status_events, assignments, jobs, loads, drivers
+      CASCADE
+      """;
+
   @Autowired private DataSource dataSource;
+
+  @BeforeEach
+  void clearData() throws SQLException {
+    try (Connection c = dataSource.getConnection();
+        Statement s = c.createStatement()) {
+      s.executeUpdate(TRUNCATE_ALL);
+    }
+  }
 
   /** Guarantee the schema is present for sibling tests/classes sharing the container. */
   @AfterEach
