@@ -90,14 +90,23 @@ class AuditApiIntegrationTest {
   }
 
   @Test
-  void auditRetrievalRequiresAdmin() throws Exception {
+  void auditRetrievalIsLimitedToDispatchersAndAdmins() throws Exception {
+    // SecurityConfig grants /api/v1/audit/** to DISPATCHER and ADMIN; dispatchers need the
+    // trail to answer "who changed this load?" from the portal.
     mockMvc
         .perform(get("/api/v1/audit").with(httpBasic("dispatcher", "dispatcher-pass")))
+        .andExpect(status().isOk());
+    mockMvc
+        .perform(get("/api/v1/audit").with(httpBasic("admin", "admin-pass")))
+        .andExpect(status().isOk());
+    mockMvc
+        .perform(get("/api/v1/audit").with(httpBasic("driver", "driver-pass")))
         .andExpect(status().isForbidden())
         .andExpect(jsonPath("$.error").value("FORBIDDEN"));
     mockMvc
-        .perform(get("/api/v1/audit").with(httpBasic("driver", "driver-pass")))
-        .andExpect(status().isForbidden());
+        .perform(get("/api/v1/audit").with(httpBasic("billing", "billing-pass")))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.error").value("FORBIDDEN"));
     mockMvc
         .perform(get("/api/v1/audit"))
         .andExpect(status().isUnauthorized())
