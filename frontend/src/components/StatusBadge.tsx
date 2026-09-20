@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils'
 import { formatEnum } from '@/lib/format'
-import type { JobStatus, JobType, LoadStatus } from '@/types'
+import type { AssignmentState, JobStatus, JobType, LoadStatus } from '@/types'
 
 /**
  * Colour per lifecycle status: grey = not started, blue = in flight, green = done,
@@ -19,12 +19,17 @@ const STATUS_STYLES: Record<string, string> = {
   EN_ROUTE: 'bg-blue-50 text-blue-700 ring-blue-600/20',
   ARRIVED: 'bg-amber-50 text-amber-700 ring-amber-600/20',
   IN_PROGRESS: 'bg-amber-50 text-amber-700 ring-amber-600/20',
+  // Assignment — an unanswered dispatch is amber because it needs watching, not celebrating.
+  PENDING: 'bg-amber-50 text-amber-700 ring-amber-600/20',
+  ACCEPTED: 'bg-blue-50 text-blue-700 ring-blue-600/20',
+  REJECTED: 'bg-red-50 text-red-700 ring-red-600/20',
+  EXPIRED: 'bg-red-50 text-red-700 ring-red-600/20',
 }
 
 const FALLBACK_STYLE = 'bg-muted text-muted-foreground'
 
 interface StatusBadgeProps {
-  status: LoadStatus | JobStatus | JobType | string
+  status: LoadStatus | JobStatus | JobType | AssignmentState | string
   className?: string
 }
 

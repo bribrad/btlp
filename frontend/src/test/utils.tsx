@@ -1,7 +1,14 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import type { Job, Load, PagedResponse } from '@/types'
+import type {
+  Assignment,
+  DispatchBoardEntry,
+  Driver,
+  Job,
+  Load,
+  PagedResponse,
+} from '@/types'
 
 /**
  * Query client for tests: no retries and no caching between cases. Pass `gcTime` when the test
@@ -64,6 +71,61 @@ export function makeLoad(overrides: Partial<Load> = {}): Load {
     updatedBy: 'dispatcher',
     createdAt: '2026-03-01T10:00:00Z',
     updatedAt: '2026-03-01T10:00:00Z',
+    ...overrides,
+  }
+}
+
+export function makeDriver(overrides: Partial<Driver> = {}): Driver {
+  return {
+    id: '33333333-3333-3333-3333-333333333333',
+    name: 'Alice Rivera',
+    phone: '555-0100',
+    licenseNumber: 'LIC-001',
+    availability: 'AVAILABLE',
+    status: 'ACTIVE',
+    createdAt: '2026-03-01T10:00:00Z',
+    updatedAt: '2026-03-01T10:00:00Z',
+    ...overrides,
+  }
+}
+
+export function makeAssignment(overrides: Partial<Assignment> = {}): Assignment {
+  return {
+    id: '44444444-4444-4444-4444-444444444444',
+    jobId: '22222222-2222-2222-2222-222222222222',
+    driverId: '33333333-3333-3333-3333-333333333333',
+    state: 'PENDING',
+    assignedAt: '2026-03-03T14:00:00Z',
+    acceptedAt: null,
+    expiresAt: '2026-03-03T14:15:00Z',
+    createdBy: 'dispatcher',
+    updatedBy: 'dispatcher',
+    createdAt: '2026-03-03T14:00:00Z',
+    updatedAt: '2026-03-03T14:00:00Z',
+    ...overrides,
+  }
+}
+
+/** A NEEDS_DISPATCH board entry by default; pass assignment fields to place it in another lane. */
+export function makeBoardEntry(overrides: Partial<DispatchBoardEntry> = {}): DispatchBoardEntry {
+  return {
+    jobId: '22222222-2222-2222-2222-222222222222',
+    loadId: '11111111-1111-1111-1111-111111111111',
+    jobType: 'PICKUP',
+    sequence: 1,
+    jobStatus: 'UNASSIGNED',
+    scheduledAt: '2026-03-03T15:00:00Z',
+    origin: 'Chicago, IL',
+    destination: 'Dallas, TX',
+    lane: 'NEEDS_DISPATCH',
+    assignmentId: null,
+    assignmentState: null,
+    assignedAt: null,
+    expiresAt: null,
+    assignedBy: null,
+    driverId: null,
+    driverName: null,
+    driverPhone: null,
     ...overrides,
   }
 }

@@ -3,6 +3,7 @@ package com.topnotchbroker.btlp.dispatch;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -34,24 +35,27 @@ public class DriverAssignmentController {
   @PostMapping("/{id}/accept")
   public AssignmentResponse accept(
       @PathVariable UUID id,
-      @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey) {
-    log.info("Accepting assignment id={}", id);
-    return assignmentService.accept(id, idempotencyKey);
+      @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
+      Authentication authentication) {
+    log.info("Accepting assignment id={} by={}", id, authentication.getName());
+    return assignmentService.accept(id, authentication.getName(), idempotencyKey);
   }
 
   @PostMapping("/{id}/reject")
   public AssignmentResponse reject(
       @PathVariable UUID id,
-      @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey) {
-    log.info("Rejecting assignment id={}", id);
-    return assignmentService.reject(id, idempotencyKey);
+      @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
+      Authentication authentication) {
+    log.info("Rejecting assignment id={} by={}", id, authentication.getName());
+    return assignmentService.reject(id, authentication.getName(), idempotencyKey);
   }
 
   @PostMapping("/{id}/complete")
   public AssignmentResponse complete(
       @PathVariable UUID id,
-      @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey) {
-    log.info("Completing assignment id={}", id);
-    return assignmentService.complete(id, idempotencyKey);
+      @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
+      Authentication authentication) {
+    log.info("Completing assignment id={} by={}", id, authentication.getName());
+    return assignmentService.complete(id, authentication.getName(), idempotencyKey);
   }
 }

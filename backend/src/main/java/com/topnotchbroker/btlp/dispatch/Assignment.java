@@ -12,5 +12,7 @@ public record Assignment(
     OffsetDateTime assignedAt,
     OffsetDateTime acceptedAt,
     OffsetDateTime expiresAt,
+    String createdBy,
+    String updatedBy,
     OffsetDateTime createdAt,
     OffsetDateTime updatedAt) {}

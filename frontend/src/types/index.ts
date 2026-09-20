@@ -110,8 +110,45 @@ export interface Assignment {
   assignedAt: string
   acceptedAt: string | null
   expiresAt: string
+  /** Dispatcher who created the assignment; null for rows predating actor stamping. */
+  createdBy: string | null
+  /** Whoever applied the last transition — a dispatcher, the driver, or `system` on expiry. */
+  updatedBy: string | null
   createdAt: string
   updatedAt: string
+}
+
+// ── Dispatch board ───────────────────────────────────────────────────────────
+
+/** Board column, derived by the backend from the job's active assignment. */
+export const DISPATCH_BOARD_LANES = [
+  'NEEDS_DISPATCH',
+  'PENDING_ACCEPTANCE',
+  'IN_PROGRESS',
+] as const
+
+export type DispatchBoardLane = (typeof DISPATCH_BOARD_LANES)[number]
+
+/** A job on the dispatch board, joined to its load and its active assignment. */
+export interface DispatchBoardEntry {
+  jobId: string
+  loadId: string
+  jobType: JobType
+  sequence: number
+  jobStatus: JobStatus
+  scheduledAt: string | null
+  origin: string
+  destination: string
+  lane: DispatchBoardLane
+  // Assignment and driver fields are null in the NEEDS_DISPATCH lane.
+  assignmentId: string | null
+  assignmentState: AssignmentState | null
+  assignedAt: string | null
+  expiresAt: string | null
+  assignedBy: string | null
+  driverId: string | null
+  driverName: string | null
+  driverPhone: string | null
 }
 
 // ── Audit ────────────────────────────────────────────────────────────────────
