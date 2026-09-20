@@ -59,19 +59,23 @@ public class AssignmentService {
    * when an {@code Idempotency-Key} is supplied.
    */
   @Transactional
-  public AssignmentResponse accept(UUID id, String idempotencyKey) {
+  public AssignmentResponse accept(UUID id, String actor, String idempotencyKey) {
     return idempotency.run(
-        idempotencyKey, "assignment:accept:" + id, AssignmentResponse.class, () -> doAccept(id));
+        idempotencyKey,
+        "assignment:accept:" + id,
+        AssignmentResponse.class,
+        () -> doAccept(id, actor));
   }
 
-  private AssignmentResponse doAccept(UUID id) {
+  private AssignmentResponse doAccept(UUID id, String actor) {
     Assignment current = assignmentRepository.findById(id).orElseThrow(() -> notFound(id));
     requireTransition(current, AssignmentState.ACCEPTED);
     if (isPastDeadline(current)) {
       throw new InvalidStateTransitionException(
           "Assignment " + id + " has expired and can no longer be accepted.");
     }
-    Assignment accepted = assignmentRepository.accept(id).orElseThrow(() -> concurrentlyChanged(id));
+    Assignment accepted =
+        assignmentRepository.accept(id, actor).orElseThrow(() -> concurrentlyChanged(id));
     jobRepository.updateStatus(accepted.jobId(), JobStatus.ASSIGNED);
     driverRepository.updateAvailability(accepted.driverId(), DriverAvailability.ON_TRIP);
     auditService.record(AuditEntityType.JOB, accepted.jobId(), AuditAction.UPDATE);
@@ -84,15 +88,19 @@ public class AssignmentService {
    * Idempotent when an {@code Idempotency-Key} is supplied.
    */
   @Transactional
-  public AssignmentResponse reject(UUID id, String idempotencyKey) {
+  public AssignmentResponse reject(UUID id, String actor, String idempotencyKey) {
     return idempotency.run(
-        idempotencyKey, "assignment:reject:" + id, AssignmentResponse.class, () -> doReject(id));
+        idempotencyKey,
+        "assignment:reject:" + id,
+        AssignmentResponse.class,
+        () -> doReject(id, actor));
   }
 
-  private AssignmentResponse doReject(UUID id) {
+  private AssignmentResponse doReject(UUID id, String actor) {
     Assignment current = assignmentRepository.findById(id).orElseThrow(() -> notFound(id));
     requireTransition(current, AssignmentState.REJECTED);
-    Assignment rejected = assignmentRepository.reject(id).orElseThrow(() -> concurrentlyChanged(id));
+    Assignment rejected =
+        assignmentRepository.reject(id, actor).orElseThrow(() -> concurrentlyChanged(id));
     auditService.record(AuditEntityType.ASSIGNMENT, rejected.id(), AuditAction.UPDATE);
     return AssignmentResponse.from(rejected);
   }
@@ -102,16 +110,19 @@ public class AssignmentService {
    * driver &rarr; AVAILABLE. Idempotent when an {@code Idempotency-Key} is supplied.
    */
   @Transactional
-  public AssignmentResponse complete(UUID id, String idempotencyKey) {
+  public AssignmentResponse complete(UUID id, String actor, String idempotencyKey) {
     return idempotency.run(
-        idempotencyKey, "assignment:complete:" + id, AssignmentResponse.class, () -> doComplete(id));
+        idempotencyKey,
+        "assignment:complete:" + id,
+        AssignmentResponse.class,
+        () -> doComplete(id, actor));
   }
 
-  private AssignmentResponse doComplete(UUID id) {
+  private AssignmentResponse doComplete(UUID id, String actor) {
     Assignment current = assignmentRepository.findById(id).orElseThrow(() -> notFound(id));
     requireTransition(current, AssignmentState.COMPLETED);
     Assignment completed =
-        assignmentRepository.complete(id).orElseThrow(() -> concurrentlyChanged(id));
+        assignmentRepository.complete(id, actor).orElseThrow(() -> concurrentlyChanged(id));
     jobRepository.updateStatus(completed.jobId(), JobStatus.COMPLETED);
     driverRepository.updateAvailability(completed.driverId(), DriverAvailability.AVAILABLE);
     auditService.record(AuditEntityType.JOB, completed.jobId(), AuditAction.UPDATE);

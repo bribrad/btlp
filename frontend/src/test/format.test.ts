@@ -4,6 +4,7 @@ import {
   formatDateTime,
   formatEnum,
   formatText,
+  formatTimeUntil,
   formatWindow,
   shortId,
 } from '@/lib/format'
@@ -38,6 +39,14 @@ describe('format helpers', () => {
     expect(formatEnum('IN_TRANSIT')).toBe('In transit')
     expect(formatEnum('PICKUP')).toBe('Pickup')
     expect(formatEnum(null)).toBe('—')
+  })
+
+  it('counts down an acceptance window and calls out an elapsed one', () => {
+    const now = Date.parse('2026-03-03T14:00:00Z')
+    expect(formatTimeUntil('2026-03-03T14:12:00Z', now)).toBe('12 min left')
+    expect(formatTimeUntil('2026-03-03T15:05:00Z', now)).toBe('1 h 05 min left')
+    expect(formatTimeUntil('2026-03-03T13:59:00Z', now)).toBe('Overdue')
+    expect(formatTimeUntil(null, now)).toBe('—')
   })
 
   it('shortens ids to eight characters', () => {

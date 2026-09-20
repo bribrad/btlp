@@ -12,6 +12,8 @@ public record AssignmentResponse(
     OffsetDateTime assignedAt,
     OffsetDateTime acceptedAt,
     OffsetDateTime expiresAt,
+    String createdBy,
+    String updatedBy,
     OffsetDateTime createdAt,
     OffsetDateTime updatedAt) {
 
@@ -24,6 +26,8 @@ public record AssignmentResponse(
         assignment.assignedAt(),
         assignment.acceptedAt(),
         assignment.expiresAt(),
+        assignment.createdBy(),
+        assignment.updatedBy(),
         assignment.createdAt(),
         assignment.updatedAt());
   }

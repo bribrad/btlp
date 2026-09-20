@@ -9,6 +9,7 @@ import { LoadFormPage } from '@/features/loads/LoadFormPage'
 import { JobsListPage } from '@/features/jobs/JobsListPage'
 import { JobDetailPage } from '@/features/jobs/JobDetailPage'
 import { JobFormPage } from '@/features/jobs/JobFormPage'
+import { DispatchBoardPage } from '@/features/dispatch/DispatchBoardPage'
 
 export const router = createBrowserRouter([
   {
@@ -40,7 +41,7 @@ export const router = createBrowserRouter([
       { path: 'jobs/new', element: <JobFormPage /> },
       { path: 'jobs/:id', element: <JobDetailPage /> },
       { path: 'jobs/:id/edit', element: <JobFormPage /> },
-      { path: 'dispatch', element: <PlaceholderPage title="Dispatch Board" /> },
+      { path: 'dispatch', element: <DispatchBoardPage /> },
       { path: 'timeline', element: <PlaceholderPage title="Activity Timeline" /> },
     ],
   },

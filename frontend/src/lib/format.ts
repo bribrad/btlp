@@ -62,6 +62,23 @@ export function formatCurrency(
   }
 }
 
+/**
+ * How long is left on a deadline, for acceptance windows on the dispatch board: "12 min left",
+ * "1 h 05 min left", or "Overdue" once it has passed. `now` is injectable so it can be tested.
+ */
+export function formatTimeUntil(
+  iso: string | null | undefined,
+  now: number = Date.now(),
+): string {
+  const deadline = parse(iso)
+  if (!deadline) return EM_DASH
+  const remainingMinutes = Math.floor((deadline.getTime() - now) / 60_000)
+  if (remainingMinutes < 0) return 'Overdue'
+  if (remainingMinutes < 60) return `${remainingMinutes} min left`
+  const hours = Math.floor(remainingMinutes / 60)
+  return `${hours} h ${String(remainingMinutes % 60).padStart(2, '0')} min left`
+}
+
 /** Turns an API enum such as IN_TRANSIT into "In transit" for display. */
 export function formatEnum(value: string | null | undefined): string {
   if (!value) return EM_DASH
