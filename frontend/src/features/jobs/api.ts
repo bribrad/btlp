@@ -14,6 +14,8 @@ export interface JobListParams {
   jobType?: JobType | ''
   page?: number
   size?: number
+  /** Skips the request until the caller has what it needs — e.g. a load to scope the list to. */
+  enabled?: boolean
 }
 
 export const jobKeys = {
@@ -22,7 +24,14 @@ export const jobKeys = {
   detail: (id: string) => [...jobKeys.all, 'detail', id] as const,
 }
 
-export function useJobs({ loadId, status, jobType, page = 0, size = 20 }: JobListParams) {
+export function useJobs({
+  loadId,
+  status,
+  jobType,
+  page = 0,
+  size = 20,
+  enabled = true,
+}: JobListParams) {
   return useQuery({
     queryKey: jobKeys.list({ loadId, status, jobType, page, size }),
     queryFn: () =>
@@ -30,6 +39,7 @@ export function useJobs({ loadId, status, jobType, page = 0, size = 20 }: JobLis
         `/jobs${buildListQuery({ loadId, status, jobType, page, size })}`,
       ),
     placeholderData: keepPreviousData,
+    enabled,
   })
 }
 

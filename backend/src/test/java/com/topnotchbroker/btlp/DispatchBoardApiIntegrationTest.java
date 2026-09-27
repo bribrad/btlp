@@ -308,8 +308,8 @@ class DispatchBoardApiIntegrationTest {
     UUID original = dispatch(aliceId);
     UUID replacement = reassign(original, bobId);
 
-    assertEquals(1, auditCount(original, "UPDATE"));
-    assertEquals(1, auditCount(replacement, "CREATE"));
+    assertEquals(1, auditCount(original, "CANCEL"));
+    assertEquals(1, auditCount(replacement, "REASSIGN"));
   }
 
   @Test

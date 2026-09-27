@@ -69,7 +69,8 @@ public class DispatchService {
           "Job " + request.jobId() + " already has a pending or accepted assignment.");
     }
     Assignment created = insertAssignment(request.jobId(), request.driverId(), actor);
-    auditService.record(AuditEntityType.ASSIGNMENT, created.id(), AuditAction.CREATE);
+    auditService.record(
+        AuditEntityType.ASSIGNMENT, created.id(), AuditAction.ASSIGN, created.state().name());
     return AssignmentResponse.from(created);
   }
 
@@ -107,7 +108,8 @@ public class DispatchService {
     requireDriver(request.driverId());
     Assignment canceled = doCancel(id, actor);
     Assignment created = insertAssignment(canceled.jobId(), request.driverId(), actor);
-    auditService.record(AuditEntityType.ASSIGNMENT, created.id(), AuditAction.CREATE);
+    auditService.record(
+        AuditEntityType.ASSIGNMENT, created.id(), AuditAction.REASSIGN, created.state().name());
     return AssignmentResponse.from(created);
   }
 
@@ -133,9 +135,14 @@ public class DispatchService {
     if (current.state() == AssignmentState.ACCEPTED) {
       jobRepository.updateStatus(canceled.jobId(), JobStatus.UNASSIGNED);
       driverRepository.updateAvailability(canceled.driverId(), DriverAvailability.AVAILABLE);
-      auditService.record(AuditEntityType.JOB, canceled.jobId(), AuditAction.UPDATE);
+      auditService.record(
+          AuditEntityType.JOB,
+          canceled.jobId(),
+          AuditAction.STATUS_CHANGE,
+          JobStatus.UNASSIGNED.name());
     }
-    auditService.record(AuditEntityType.ASSIGNMENT, canceled.id(), AuditAction.UPDATE);
+    auditService.record(
+        AuditEntityType.ASSIGNMENT, canceled.id(), AuditAction.CANCEL, canceled.state().name());
     return canceled;
   }
 

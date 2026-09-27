@@ -16,8 +16,8 @@ public class AuditEventRepository {
 
   private static final String INSERT_SQL =
       """
-      INSERT INTO audit_events (entity_type, entity_id, action, actor)
-      VALUES (:entityType, :entityId, :action, :actor)
+      INSERT INTO audit_events (entity_type, entity_id, action, detail, actor)
+      VALUES (:entityType, :entityId, :action, :detail, :actor)
       RETURNING *
       """;
 
@@ -25,9 +25,11 @@ public class AuditEventRepository {
       (rs, rowNum) ->
           new AuditEvent(
               rs.getObject("id", UUID.class),
+              rs.getLong("seq"),
               AuditEntityType.valueOf(rs.getString("entity_type")),
               rs.getObject("entity_id", UUID.class),
               AuditAction.valueOf(rs.getString("action")),
+              rs.getString("detail"),
               rs.getString("actor"),
               rs.getObject("occurred_at", OffsetDateTime.class));
 
@@ -38,12 +40,13 @@ public class AuditEventRepository {
   }
 
   public AuditEvent insert(
-      AuditEntityType entityType, UUID entityId, AuditAction action, String actor) {
+      AuditEntityType entityType, UUID entityId, AuditAction action, String detail, String actor) {
     MapSqlParameterSource params =
         new MapSqlParameterSource()
             .addValue("entityType", entityType.name(), Types.VARCHAR)
             .addValue("entityId", entityId, Types.OTHER)
             .addValue("action", action.name(), Types.VARCHAR)
+            .addValue("detail", detail, Types.VARCHAR)
             .addValue("actor", actor, Types.VARCHAR);
     return jdbc.queryForObject(INSERT_SQL, params, ROW_MAPPER);
   }
@@ -53,7 +56,7 @@ public class AuditEventRepository {
     MapSqlParameterSource params = new MapSqlParameterSource();
     StringBuilder sql = new StringBuilder("SELECT * FROM audit_events");
     appendFilters(sql, params, entityType, entityId);
-    sql.append(" ORDER BY occurred_at DESC, id DESC LIMIT :limit OFFSET :offset");
+    sql.append(" ORDER BY seq DESC LIMIT :limit OFFSET :offset");
     params.addValue("limit", limit).addValue("offset", offset);
     return jdbc.query(sql.toString(), params, ROW_MAPPER);
   }

@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import type {
+  ActivityEvent,
   Assignment,
   DispatchBoardEntry,
   Driver,
@@ -140,6 +141,30 @@ export function makeJob(overrides: Partial<Job> = {}): Job {
     scheduledAt: '2026-03-03T15:00:00Z',
     createdAt: '2026-03-01T10:00:00Z',
     updatedAt: '2026-03-01T10:00:00Z',
+    ...overrides,
+  }
+}
+
+/** A load-level CREATE by default; pass job/assignment fields to move it down the hierarchy. */
+export function makeActivityEvent(overrides: Partial<ActivityEvent> = {}): ActivityEvent {
+  return {
+    id: '77777777-7777-7777-7777-777777777777',
+    sequence: 1,
+    occurredAt: '2026-03-03T14:00:00Z',
+    actor: 'dispatcher',
+    entityType: 'LOAD',
+    entityId: '11111111-1111-1111-1111-111111111111',
+    action: 'CREATE',
+    detail: 'PLANNED',
+    loadId: '11111111-1111-1111-1111-111111111111',
+    origin: 'Chicago, IL',
+    destination: 'Dallas, TX',
+    jobId: null,
+    jobType: null,
+    jobSequence: null,
+    assignmentId: null,
+    driverId: null,
+    driverName: null,
     ...overrides,
   }
 }

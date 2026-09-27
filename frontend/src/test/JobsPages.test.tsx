@@ -3,7 +3,7 @@ import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { JobsListPage } from '@/features/jobs/JobsListPage'
 import { JobDetailPage } from '@/features/jobs/JobDetailPage'
-import { makeJob, makeLoad, page, renderRoute } from './utils'
+import { makeActivityEvent, makeJob, makeLoad, page, renderRoute } from './utils'
 
 vi.mock('@/api/client', async importOriginal => {
   const actual = await importOriginal<typeof import('@/api/client')>()
@@ -89,6 +89,7 @@ describe('JobDetailPage', () => {
   it('renders the job and its parent load', async () => {
     mockGet.mockImplementation(async (path: string) => {
       if (path.startsWith('/jobs/')) return makeJob() as never
+      if (path.startsWith('/activity')) return page([makeActivityEvent()]) as never
       return makeLoad() as never
     })
 
@@ -104,6 +105,7 @@ describe('JobDetailPage', () => {
   it('keeps the job readable when its parent load fails to load', async () => {
     mockGet.mockImplementation(async (path: string) => {
       if (path.startsWith('/jobs/')) return makeJob() as never
+      if (path.startsWith('/activity')) return page([]) as never
       throw new ApiRequestError(500, 'ERROR', 'boom')
     })
 
@@ -120,5 +122,30 @@ describe('JobDetailPage', () => {
 
     const alert = await screen.findByRole('alert')
     expect(within(alert).getByText('That record no longer exists.')).toBeInTheDocument()
+  })
+
+  it('shows the leg\u2019s own activity alongside the record', async () => {
+    mockGet.mockImplementation(async (path: string) => {
+      if (path.startsWith('/jobs/')) return makeJob() as never
+      if (path.startsWith('/activity')) {
+        return page([
+          makeActivityEvent({
+            entityType: 'ASSIGNMENT',
+            action: 'ASSIGN',
+            jobId: JOB_ID,
+            jobType: 'PICKUP',
+            jobSequence: 1,
+            driverId: '33333333-3333-3333-3333-333333333333',
+            driverName: 'Alice Rivera',
+          }),
+        ]) as never
+      }
+      return makeLoad() as never
+    })
+
+    renderDetail()
+
+    expect(await screen.findByText('Dispatched to Alice Rivera')).toBeInTheDocument()
+    expect(mockGet).toHaveBeenCalledWith(expect.stringContaining(`/activity?jobId=${JOB_ID}`))
   })
 })

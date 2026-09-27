@@ -5,6 +5,7 @@ import { DetailCard, DetailField, DetailList } from '@/components/DetailCard'
 import { PageHeader } from '@/components/PageHeader'
 import { DetailSkeleton, EmptyState, ErrorState } from '@/components/QueryStates'
 import { StatusBadge } from '@/components/StatusBadge'
+import { ActivityTimeline } from '@/features/activity/ActivityTimeline'
 import { useJobs } from '@/features/jobs/api'
 import {
   formatCurrency,
@@ -97,6 +98,14 @@ export function LoadDetailPage() {
       </div>
 
       <LoadJobs loadId={load.id} />
+
+      <DetailCard title="Activity">
+        <ActivityTimeline
+          loadId={load.id}
+          linkToContext={false}
+          emptyDescription="Events on this load and its jobs appear here as they happen."
+        />
+      </DetailCard>
     </div>
   )
 }

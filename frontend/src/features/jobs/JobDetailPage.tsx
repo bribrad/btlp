@@ -6,6 +6,7 @@ import { PageHeader } from '@/components/PageHeader'
 import { DetailSkeleton, ErrorState } from '@/components/QueryStates'
 import { errorMessage } from '@/lib/errors'
 import { StatusBadge } from '@/components/StatusBadge'
+import { ActivityTimeline } from '@/features/activity/ActivityTimeline'
 import { useLoad } from '@/features/loads/api'
 import { formatDateTime, formatEnum, formatText, formatWindow } from '@/lib/format'
 import { useJob } from './api'
@@ -72,6 +73,14 @@ export function JobDetailPage() {
 
         <ParentLoad loadId={job.loadId} className="lg:col-span-2" />
       </div>
+
+      <DetailCard title="Activity">
+        <ActivityTimeline
+          jobId={job.id}
+          linkToContext={false}
+          emptyDescription="Dispatch and status events for this leg appear here as they happen."
+        />
+      </DetailCard>
     </div>
   )
 }

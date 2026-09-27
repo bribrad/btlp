@@ -78,8 +78,10 @@ public class AssignmentService {
         assignmentRepository.accept(id, actor).orElseThrow(() -> concurrentlyChanged(id));
     jobRepository.updateStatus(accepted.jobId(), JobStatus.ASSIGNED);
     driverRepository.updateAvailability(accepted.driverId(), DriverAvailability.ON_TRIP);
-    auditService.record(AuditEntityType.JOB, accepted.jobId(), AuditAction.UPDATE);
-    auditService.record(AuditEntityType.ASSIGNMENT, accepted.id(), AuditAction.UPDATE);
+    auditService.record(
+        AuditEntityType.JOB, accepted.jobId(), AuditAction.STATUS_CHANGE, JobStatus.ASSIGNED.name());
+    auditService.record(
+        AuditEntityType.ASSIGNMENT, accepted.id(), AuditAction.ACCEPT, accepted.state().name());
     return AssignmentResponse.from(accepted);
   }
 
@@ -101,7 +103,8 @@ public class AssignmentService {
     requireTransition(current, AssignmentState.REJECTED);
     Assignment rejected =
         assignmentRepository.reject(id, actor).orElseThrow(() -> concurrentlyChanged(id));
-    auditService.record(AuditEntityType.ASSIGNMENT, rejected.id(), AuditAction.UPDATE);
+    auditService.record(
+        AuditEntityType.ASSIGNMENT, rejected.id(), AuditAction.REJECT, rejected.state().name());
     return AssignmentResponse.from(rejected);
   }
 
@@ -125,8 +128,13 @@ public class AssignmentService {
         assignmentRepository.complete(id, actor).orElseThrow(() -> concurrentlyChanged(id));
     jobRepository.updateStatus(completed.jobId(), JobStatus.COMPLETED);
     driverRepository.updateAvailability(completed.driverId(), DriverAvailability.AVAILABLE);
-    auditService.record(AuditEntityType.JOB, completed.jobId(), AuditAction.UPDATE);
-    auditService.record(AuditEntityType.ASSIGNMENT, completed.id(), AuditAction.UPDATE);
+    auditService.record(
+        AuditEntityType.JOB,
+        completed.jobId(),
+        AuditAction.STATUS_CHANGE,
+        JobStatus.COMPLETED.name());
+    auditService.record(
+        AuditEntityType.ASSIGNMENT, completed.id(), AuditAction.COMPLETE, completed.state().name());
     return AssignmentResponse.from(completed);
   }
 
@@ -139,7 +147,11 @@ public class AssignmentService {
   public int expireStaleAssignments() {
     List<Assignment> expired = assignmentRepository.expireStale();
     for (Assignment assignment : expired) {
-      auditService.record(AuditEntityType.ASSIGNMENT, assignment.id(), AuditAction.UPDATE);
+      auditService.record(
+          AuditEntityType.ASSIGNMENT,
+          assignment.id(),
+          AuditAction.EXPIRE,
+          assignment.state().name());
     }
     return expired.size();
   }

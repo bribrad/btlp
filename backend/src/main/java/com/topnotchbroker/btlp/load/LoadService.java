@@ -45,7 +45,8 @@ public class LoadService {
             null,
             null);
     Load created = repository.insert(toInsert);
-    auditService.record(AuditEntityType.LOAD, created.id(), AuditAction.CREATE);
+    auditService.record(
+        AuditEntityType.LOAD, created.id(), AuditAction.CREATE, created.status().name());
     return LoadResponse.from(created);
   }
 
@@ -85,7 +86,8 @@ public class LoadService {
             null,
             null);
     Load updated = repository.update(id, values).orElseThrow(() -> notFound(id));
-    auditService.record(AuditEntityType.LOAD, updated.id(), AuditAction.UPDATE);
+    auditService.record(
+        AuditEntityType.LOAD, updated.id(), AuditAction.UPDATE, updated.status().name());
     return LoadResponse.from(updated);
   }
 

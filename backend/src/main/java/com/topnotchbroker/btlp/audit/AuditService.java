@@ -26,7 +26,17 @@ public class AuditService {
 
   @Transactional
   public void record(AuditEntityType entityType, UUID entityId, AuditAction action) {
-    repository.insert(entityType, entityId, action, currentActor());
+    record(entityType, entityId, action, null);
+  }
+
+  /**
+   * Records an event along with the entity's resulting status/state, which is what the operations
+   * timeline renders as the "what" of a {@code STATUS_CHANGE}.
+   */
+  @Transactional
+  public void record(
+      AuditEntityType entityType, UUID entityId, AuditAction action, String detail) {
+    repository.insert(entityType, entityId, action, detail, currentActor());
   }
 
   @Transactional(readOnly = true)
