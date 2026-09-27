@@ -47,3 +47,9 @@ databaseChangeLog:
   - include:
       file: changes/0016_add_assignment_actor_columns.sql
       relativeToChangelogFile: true
+  - include:
+      file: changes/0017_add_audit_event_sequence_and_detail.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/0018_extend_audit_events_action.sql
+      relativeToChangelogFile: true

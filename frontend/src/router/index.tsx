@@ -2,7 +2,6 @@ import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { AuthGuard } from '@/features/auth/AuthGuard'
 import { LoginPage } from '@/features/auth/LoginPage'
 import { PageLayout } from '@/components/PageLayout'
-import { PlaceholderPage } from '@/components/PlaceholderPage'
 import { LoadsListPage } from '@/features/loads/LoadsListPage'
 import { LoadDetailPage } from '@/features/loads/LoadDetailPage'
 import { LoadFormPage } from '@/features/loads/LoadFormPage'
@@ -10,6 +9,7 @@ import { JobsListPage } from '@/features/jobs/JobsListPage'
 import { JobDetailPage } from '@/features/jobs/JobDetailPage'
 import { JobFormPage } from '@/features/jobs/JobFormPage'
 import { DispatchBoardPage } from '@/features/dispatch/DispatchBoardPage'
+import { ActivityPage } from '@/features/activity/ActivityPage'
 
 export const router = createBrowserRouter([
   {
@@ -42,7 +42,7 @@ export const router = createBrowserRouter([
       { path: 'jobs/:id', element: <JobDetailPage /> },
       { path: 'jobs/:id/edit', element: <JobFormPage /> },
       { path: 'dispatch', element: <DispatchBoardPage /> },
-      { path: 'timeline', element: <PlaceholderPage title="Activity Timeline" /> },
+      { path: 'timeline', element: <ActivityPage /> },
     ],
   },
   {

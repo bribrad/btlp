@@ -44,7 +44,8 @@ public class JobService {
             null,
             null);
     Job created = repository.insert(toInsert);
-    auditService.record(AuditEntityType.JOB, created.id(), AuditAction.CREATE);
+    auditService.record(
+        AuditEntityType.JOB, created.id(), AuditAction.CREATE, created.status().name());
     return JobResponse.from(created);
   }
 
@@ -78,7 +79,8 @@ public class JobService {
             null,
             null);
     Job updated = repository.update(id, values).orElseThrow(() -> notFound(id));
-    auditService.record(AuditEntityType.JOB, updated.id(), AuditAction.UPDATE);
+    auditService.record(
+        AuditEntityType.JOB, updated.id(), AuditAction.UPDATE, updated.status().name());
     return JobResponse.from(updated);
   }
 

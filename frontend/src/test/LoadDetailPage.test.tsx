@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { screen, within } from '@testing-library/react'
 import { LoadDetailPage } from '@/features/loads/LoadDetailPage'
-import { makeJob, makeLoad, page, renderRoute } from './utils'
+import { makeActivityEvent, makeJob, makeLoad, page, renderRoute } from './utils'
 
 vi.mock('@/api/client', async importOriginal => {
   const actual = await importOriginal<typeof import('@/api/client')>()
@@ -26,6 +26,7 @@ describe('LoadDetailPage', () => {
   it('renders the full record and the load’s jobs', async () => {
     mockGet.mockImplementation(async (path: string) => {
       if (path.startsWith('/loads/')) return makeLoad() as never
+      if (path.startsWith('/activity')) return page([makeActivityEvent()]) as never
       return page([makeJob(), makeJob({ id: 'job-2', jobType: 'DROPOFF', sequence: 2 })]) as never
     })
 
@@ -91,6 +92,7 @@ describe('LoadDetailPage', () => {
   it('keeps the load visible when its jobs fail to load', async () => {
     mockGet.mockImplementation(async (path: string) => {
       if (path.startsWith('/loads/')) return makeLoad() as never
+      if (path.startsWith('/activity')) return page([]) as never
       throw new ApiRequestError(500, 'ERROR', 'boom')
     })
 
@@ -100,5 +102,33 @@ describe('LoadDetailPage', () => {
       await screen.findByRole('heading', { name: 'Chicago, IL → Dallas, TX' }),
     ).toBeInTheDocument()
     expect(await screen.findByRole('alert')).toBeInTheDocument()
+  })
+
+  it('shows the load’s activity, including events on its jobs', async () => {
+    mockGet.mockImplementation(async (path: string) => {
+      if (path.startsWith('/loads/')) return makeLoad() as never
+      if (path.startsWith('/activity')) {
+        return page([
+          makeActivityEvent({
+            id: 'event-assign',
+            entityType: 'ASSIGNMENT',
+            action: 'ASSIGN',
+            jobId: makeJob().id,
+            jobType: 'PICKUP',
+            jobSequence: 1,
+            driverId: '33333333-3333-3333-3333-333333333333',
+            driverName: 'Alice Rivera',
+          }),
+          makeActivityEvent(),
+        ]) as never
+      }
+      return page([makeJob()]) as never
+    })
+
+    renderDetail()
+
+    expect(await screen.findByText('Dispatched to Alice Rivera')).toBeInTheDocument()
+    expect(screen.getByText('Load created')).toBeInTheDocument()
+    expect(mockGet).toHaveBeenCalledWith(expect.stringContaining(`/activity?loadId=${LOAD_ID}`))
   })
 })

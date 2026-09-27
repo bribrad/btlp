@@ -40,6 +40,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/jobs/**").hasAnyRole("DISPATCHER", "ADMIN")
                 .requestMatchers("/api/v1/drivers/**").hasAnyRole("DISPATCHER", "ADMIN")
                 .requestMatchers("/api/v1/audit/**").hasAnyRole("DISPATCHER", "ADMIN")
+                .requestMatchers("/api/v1/activity/**").hasAnyRole("DISPATCHER", "ADMIN")
                 .requestMatchers("/api/v1/driver/**").hasAnyRole("DRIVER", "ADMIN")
                 .requestMatchers("/api/v1/billing/**").hasAnyRole("BILLING", "ADMIN")
                 .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")

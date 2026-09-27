@@ -155,13 +155,57 @@ export interface DispatchBoardEntry {
 
 export type AuditEntityType = 'LOAD' | 'JOB' | 'ASSIGNMENT'
 
-export type AuditAction = 'CREATE' | 'UPDATE'
+export const AUDIT_ACTIONS = [
+  'CREATE',
+  'UPDATE',
+  'STATUS_CHANGE',
+  'ASSIGN',
+  'REASSIGN',
+  'CANCEL',
+  'ACCEPT',
+  'REJECT',
+  'EXPIRE',
+  'COMPLETE',
+] as const
+
+export type AuditAction = (typeof AUDIT_ACTIONS)[number]
 
 export interface AuditEvent {
   id: string
+  /** Monotonic insertion order; the timeline sorts on this, not on `occurredAt`. */
+  sequence: number
   entityType: AuditEntityType
   entityId: string
   action: AuditAction
+  /** The entity's resulting status/state, or null for actions that have none. */
+  detail: string | null
   actor: string
   occurredAt: string
+}
+
+// ── Activity timeline ────────────────────────────────────────────────────────
+
+/**
+ * An audit event resolved against the load, job, assignment, and driver it concerns. Context
+ * fields narrow with the entity type — a load event carries no job, only an assignment event
+ * carries a driver — and are also null once the referenced row is gone.
+ */
+export interface ActivityEvent {
+  id: string
+  sequence: number
+  occurredAt: string
+  actor: string
+  entityType: AuditEntityType
+  entityId: string
+  action: AuditAction
+  detail: string | null
+  loadId: string | null
+  origin: string | null
+  destination: string | null
+  jobId: string | null
+  jobType: JobType | null
+  jobSequence: number | null
+  assignmentId: string | null
+  driverId: string | null
+  driverName: string | null
 }
