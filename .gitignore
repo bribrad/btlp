@@ -2,6 +2,9 @@
 github-projects/*.md
 backend/target/
 
+# Backend log captured by scripts/ci/e2e.sh while the API runs in the background
+backend/e2e-backend.log
+
 # Frontend (Vite/React) build artifacts & dependencies
 frontend/node_modules/
 frontend/dist/

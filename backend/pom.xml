@@ -109,6 +109,35 @@
           <password>${env.SPRING_DATASOURCE_PASSWORD}</password>
         </configuration>
       </plugin>
+      <!--
+        JaCoCo coverage. The agent is attached before tests and the report is written to
+        target/site/jacoco/ (html + xml + csv) at the end of the test phase, so a plain
+        `mvn test` measures coverage with no extra flags.
+
+        No <check> rule is configured deliberately: a guessed minimum would either be
+        toothless or break a green build. Read the first few reports, then add a `check`
+        execution with a floor just under the current line/branch ratio to ratchet from.
+      -->
+      <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+        <version>0.8.12</version>
+        <executions>
+          <execution>
+            <id>jacoco-prepare-agent</id>
+            <goals>
+              <goal>prepare-agent</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>jacoco-report</id>
+            <phase>test</phase>
+            <goals>
+              <goal>report</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
 </project>
