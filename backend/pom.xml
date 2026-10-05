@@ -117,6 +117,7 @@
             <api.version>1.41</api.version>
           </systemPropertyVariables>
         </configuration>
+      </plugin>
       <!--
         JaCoCo coverage. The agent is attached before tests and the report is written to
         target/site/jacoco/ (html + xml + csv) at the end of the test phase, so a plain
