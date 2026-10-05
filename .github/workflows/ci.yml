@@ -60,6 +60,61 @@ jobs:
       - name: Run tests
         run: scripts/ci/test.sh
 
+      # Both suites measure coverage as part of `test` (JaCoCo binds to the Maven test
+      # phase; `npm test` passes --coverage), so this only surfaces the numbers.
+      - name: Summarize coverage
+        if: always()
+        run: scripts/ci/coverage-summary.sh
+
+      - name: Upload coverage reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: |
+            backend/target/site/jacoco/
+            frontend/coverage/
+          if-no-files-found: warn
+          retention-days: 14
+
+  e2e:
+    name: e2e
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      - name: Run end-to-end suite
+        run: scripts/ci/e2e.sh
+
+      # The HTML report (and the traces Playwright keeps on first retry) are the only way
+      # to diagnose a browser failure after the runner is gone.
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: frontend/playwright-report/
+          if-no-files-found: ignore
+          retention-days: 14
+
   build:
     name: build
     needs:
