@@ -53,9 +53,10 @@ cd backend && mvn -B test -Dtest=LoadApiIntegrationTest#createReturns201WithBody
 **Docker is a hard requirement for `mvn test`.** The suite boots a real PostgreSQL via Testcontainers;
 without a Docker daemon every integration test fails at startup.
 
-On **Docker Engine 29 and newer** the suite currently fails with `Could not find a valid Docker
-environment` even though the daemon is running: docker-java negotiates API v1.32, which the engine
-rejects. Until issue #71 lands, add `-Dapi.version=1.44`.
+**Minimum supported Docker Engine: 20.10.** `backend/pom.xml` pins the Docker API version Surefire
+passes to Testcontainers (`api.version=1.41`), because docker-java otherwise negotiates v1.32 and
+Engine 29+ rejects anything below v1.40 with a 400 — surfacing as `Could not find a valid Docker
+environment` even though the daemon is running. v1.41 is served by every engine from 20.10 onward.
 
 ## Architecture
 
